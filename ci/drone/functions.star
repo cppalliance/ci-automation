@@ -837,8 +837,12 @@ def generate(compiler_ranges, cxx_range, max_cxx=2, coverage=True, docs=True, as
         if type == 'docs':
             image = 'cppalliance/droneubuntu1804:1'
         elif compiler == 'gcc':
-            if version[0] >= 12:
+            if version[0] >= 13:
+                image = 'cppalliance/droneubuntu2404:1'
+            elif version[0] >= 10:
                 image = 'cppalliance/droneubuntu2204:1'
+            elif version[0] >= 7:
+                image = 'cppalliance/droneubuntu2004:1'
             elif version[0] >= 5:
                 image = 'cppalliance/droneubuntu1804:1'
             else:
@@ -848,9 +852,11 @@ def generate(compiler_ranges, cxx_range, max_cxx=2, coverage=True, docs=True, as
         elif compiler in ['arm64-gcc', 'arm64-clang']:
             image = 'cppalliance/droneubuntu2004:multiarch'
         elif compiler == 'clang':
-            if version[0] >= 13:
+            if version[0] >= 16:
+                image = 'cppalliance/droneubuntu2404:1'
+            elif version[0] >= 11:
                 image = 'cppalliance/droneubuntu2204:1'
-            elif version[0] >= 10:
+            elif version[0] >= 6:
                 image = 'cppalliance/droneubuntu2004:1'
             elif version[0] >= 4:
                 image = 'cppalliance/droneubuntu1804:1'

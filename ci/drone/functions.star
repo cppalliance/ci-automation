@@ -476,6 +476,8 @@ def job_impl(
         '1804': 'bionic',
         '2004': 'focal',
         '2204': 'jammy',
+        '2404': 'noble',
+        '2410': 'oracular',
       }
       kwargs['llvm_os'] = names[image.split('ubuntu')[-1].split(':')[0]] # get part between 'ubuntu' and ':'
       kwargs['llvm_ver'] = compiler.split('-')[1]

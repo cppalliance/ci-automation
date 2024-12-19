@@ -476,6 +476,8 @@ def job_impl(
         '1804': 'bionic',
         '2004': 'focal',
         '2204': 'jammy',
+        '2404': 'noble',
+        '2410': 'oracular',
       }
       kwargs['llvm_os'] = names[image.split('ubuntu')[-1].split(':')[0]] # get part between 'ubuntu' and ':'
       kwargs['llvm_ver'] = compiler.split('-')[1]
@@ -885,6 +887,10 @@ def generate(compiler_ranges, cxx_range, max_cxx=2, coverage=True, docs=True, as
                 llvm_os = 'focal'
             elif image == 'cppalliance/droneubuntu2204:1':
                 llvm_os = 'jammy'
+            elif image == 'cppalliance/droneubuntu2404:1':
+                llvm_os = 'noble'
+            elif image == 'cppalliance/droneubuntu2410:1':
+                llvm_os = 'oracular'
 
         if cache_dir != None and image_supports_caching(image, compiler):
             environment['drone_cache_mount'] = cache_dir

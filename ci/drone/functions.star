@@ -882,15 +882,17 @@ def generate(compiler_ranges, cxx_range, max_cxx=2, coverage=True, docs=True, as
             if version[0] == 4:
                 llvm_os = 'xenial'
             elif image == 'cppalliance/droneubuntu1804:1':
-                llvm_os = 'bionic'
+                if version[0] >= 5:
+                    llvm_os = 'bionic'
             elif image in ['cppalliance/droneubuntu2004:1', 'cppalliance/droneubuntu2004:multiarch']:
-                llvm_os = 'focal'
+                if version[0] >= 9:
+                    llvm_os = 'focal'
             elif image == 'cppalliance/droneubuntu2204:1':
-                llvm_os = 'jammy'
+                if version[0] >= 13:
+                    llvm_os = 'jammy'
             elif image == 'cppalliance/droneubuntu2404:1':
-                llvm_os = 'noble'
-            elif image == 'cppalliance/droneubuntu2410:1':
-                llvm_os = 'oracular'
+                if version[0] >= 17:
+                    llvm_os = 'noble'
 
         if cache_dir != None and image_supports_caching(image, compiler):
             environment['drone_cache_mount'] = cache_dir

@@ -25,4 +25,4 @@ jobs:
       - name: Black
         run: |
           set -xe
-          black scripts/gcov-compare.py
+          black --check scripts/gcov-compare.py

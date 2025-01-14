@@ -19,8 +19,9 @@ mkdir -p test
 cd test
 
 export REPONAME=url
-export ORGANIZATION=cppalliance
+export ORGANIZATION=boostorg
 ghprbTargetBranch=develop
+CHANGE_TARGET=develop 
 export JOBFOLDER="${REPONAME}_job_folder"
 
 echo "Initial cleanup. Remove job folder"

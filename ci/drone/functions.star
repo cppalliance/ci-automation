@@ -162,7 +162,8 @@ def linux_cxx(
       "arch": arch
     },
     "clone": {
-       "retries": 5
+       "retries": 5,
+       "timeout": 60
     },
     "node": node,
     "steps": steps
@@ -929,7 +930,7 @@ def generate(compiler_ranges, cxx_range, max_cxx=2, coverage=True, docs=True, as
                     packages=' '.join(packages),
                     buildscript="drone",
                     buildtype=buildtype,
-                    xcode_version="13.4.1",
+                    xcode_version="16.2.0",
                     environment=environment,
                     globalenv=globalenv))
         elif compiler.startswith('freebsd'):
@@ -1006,7 +1007,7 @@ def compilers_in_range(compiler_range_str):
         'arm64-gcc': ['11'],
         'freebsd-gcc': ['11', '10', '9', '8'],
         'clang': ['15', '14', '13', '12', '11', '10', '9', '8', '7', '6.0', '5.0', '4.0', '3.8'],
-        'apple-clang': ['13.4.1'],
+        'apple-clang': ['16.2.0'],
         's390x-clang': ['14'],
         'arm64-clang': ['12'],
         'freebsd-clang': ['15', '14', '13', '12', '11', '10'],

@@ -94,13 +94,13 @@ run_coverage_reports () {
     mkdir gcovr
     mkdir -p json
     cd ../boost-root
-    gcovr -p --html-cascaded-directories --html-details --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
+    gcovr -p --html-nested --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
     ls -al "$BOOST_CI_SRC_FOLDER/gcovr"
 
-    gcovr -p --html-cascaded-directories --json-summary --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/summary.json"
+    gcovr -p --json-summary --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/summary.json"
     # jq . $BOOST_CI_SRC_FOLDER/json/summary.json
 
-    gcovr -p --html-cascaded-directories --json --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/coverage.json"
+    gcovr -p --json --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/coverage.json"
     # jq . $BOOST_CI_SRC_FOLDER/json/coverage.json
 }
 

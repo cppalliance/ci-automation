@@ -82,7 +82,7 @@ run_coverage_reports () {
     lcov --ignore-errors unused --remove coverage.info -o coverage_filtered.info '*/test/*' '*/extra/*'
 
     # Now the tracefile is coverage_filtered.info
-    genhtml --flat -o genhtml coverage_filtered.info
+    genhtml -o genhtml coverage_filtered.info
 
     #########################
     #
@@ -94,7 +94,7 @@ run_coverage_reports () {
     mkdir gcovr
     mkdir -p json
     cd ../boost-root
-    gcovr -p --html-details --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
+    gcovr -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
     ls -al "$BOOST_CI_SRC_FOLDER/gcovr"
 
     gcovr -p --json-summary --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/summary.json"

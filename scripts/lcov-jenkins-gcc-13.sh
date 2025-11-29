@@ -94,13 +94,13 @@ run_coverage_reports () {
     mkdir gcovr
     mkdir -p json
     cd ../boost-root
-    gcovr -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
+    gcovr --merge-mode-functions separate -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
     ls -al "$BOOST_CI_SRC_FOLDER/gcovr"
 
-    gcovr -p --json-summary --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/summary.json"
+    gcovr --merge-mode-functions separate -p --json-summary --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/summary.json"
     # jq . $BOOST_CI_SRC_FOLDER/json/summary.json
 
-    gcovr -p --json --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/coverage.json"
+    gcovr --merge-mode-functions separate -p --json --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/coverage.json"
     # jq . $BOOST_CI_SRC_FOLDER/json/coverage.json
 }
 

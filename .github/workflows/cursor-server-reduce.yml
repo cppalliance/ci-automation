@@ -1,0 +1,48 @@
+name: Resize (Reduce) cursor.cpp.al
+
+# Reduce the size the remote workstation cursor.cpp.al.
+#
+# The other workflow file increases the instance size.
+#
+# This one reduces it again, each Monday.
+#
+# Can be blocked with GHA variables cursor_block_resize cursor_block_reduce.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 1"
+
+jobs:
+  scale-deploy-server:
+    runs-on: ubuntu-latest
+    container: amazon/aws-cli:2.32.19
+    name: Scale
+    env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.CURSOR_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.CURSOR_AWS_SECRET_ACCESS_KEY }}
+    if: github.repository == 'cppalliance/ci-automation'
+    steps:
+      - name: Debug
+        run: |
+            set -xe
+            pwd
+            whoami
+            aws --version
+            echo "github.event_name is ${{ github.event_name }}"
+
+      - name: Check if the action is disabled.
+        id: blocker
+        run: |
+            set -xe
+            block="no"
+            cursor_block_reduce="${{ vars.cursor_block_reduce }}"
+            if [[ ${cursor_block_reduce,,} =~ yes ]]; then
+                block="yes"
+            fi
+            echo "block=$block" >> $GITHUB_OUTPUT
+
+      - name: Resize Instance
+        if: ${{ github.event_name == 'workflow_dispatch' || steps.blocker.outputs.block == 'no' }}
+        run: |
+            aws ssm start-automation-execution --document-name "AWS-ResizeInstance" --document-version "\$DEFAULT" --parameters '{"InstanceId":["${{ secrets.CURSOR_INSTANCE_ID }}"],"InstanceType":["t3.micro"],"SleepWait":["PT5S"]}' --region ${{ secrets.CURSOR_REGION }}

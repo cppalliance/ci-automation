@@ -1,0 +1,100 @@
+name: Resize cursor.cpp.al
+
+# Resize the remote workstation cursor.cpp.al.
+#
+# See initial setup instructions at the end of this file.
+#
+# Can be blocked with GHA variables cursor_block_resize cursor_block_reduce.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scale-deploy-server:
+    runs-on: ubuntu-latest
+    container: amazon/aws-cli:2.32.19
+    name: Scale
+    env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.CURSOR_AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.CURSOR_AWS_SECRET_ACCESS_KEY }}
+    if: github.repository == 'cppalliance/ci-automation'
+    steps:
+      - name: Debug
+        run: |
+            set -xe
+            pwd
+            whoami
+            aws --version
+            echo "github.event_name is ${{ github.event_name }}"
+
+      - name: Check if the action is disabled.
+        id: blocker
+        run: |
+            set -xe
+            block="no"
+            cursor_block_resize="${{ vars.cursor_block_resize }}"
+            if [[ ${cursor_block_resize,,} =~ yes ]]; then
+                block="yes"
+            fi
+            echo "block=$block" >> $GITHUB_OUTPUT
+
+      - name: Get number of Wednesday on a Wednesday
+        id: number-of-wednesday-on-a-wednesday
+        run: >-
+          printf >> "$GITHUB_OUTPUT"
+          "VALUE=%s"
+          "$((($(date +%-d)-1)/7+1))"
+      - name: Resize Instance
+        if: ${{ github.event_name == 'workflow_dispatch' || ( steps.blocker.outputs.block == 'no' && steps.number-of-wednesday-on-a-wednesday.outputs.VALUE == 2 && github.event_name == 'schedule' ) }}
+        run: |
+            aws ssm start-automation-execution --document-name "AWS-ResizeInstance" --document-version "\$DEFAULT" --parameters '{"InstanceId":["${{ secrets.CURSOR_INSTANCE_ID }}"],"InstanceType":["t3.xlarge"],"SleepWait":["PT5S"]}' --region ${{ secrets.CURSOR_REGION }}
+
+
+# Initial Setup Instructions
+#
+# In AWS, create an instance. Install packages.
+# In AWS IAM, create a user, api keys, assign policies.
+# Assign policies to the user: EC2-Resize and AmazonSSMFullAccess(managed).
+# Create the policy EC2-Cursor-Resize:
+# {
+# 	"Version": "2012-10-17",
+# 	"Statement": [
+# 		{
+# 			"Sid": "Stmt1471613026000",
+# 			"Effect": "Allow",
+# 			"Action": [
+# 				"ec2:ModifyInstanceAttribute"
+# 			],
+# 			"Resource": "arn:aws:ec2:_region_:_account_:instance/_instance-id_",
+# 			"Condition": {
+# 				"StringEquals": {
+# 					"ec2:Attribute": "InstanceType"
+# 				}
+# 			}
+# 		},
+#               {
+#                   "Effect": "Allow",
+#                   "Action": [
+#                       "ec2:DescribeInstances"
+#                   ],
+#                   "Resource": "*"
+#               },
+# 		{
+# 			"Effect": "Allow",
+# 			"Action": [
+# 				"ec2:StartInstances",
+# 				"ec2:StopInstances"
+# 			],
+#                 "Resource": "arn:aws:ec2:_region_:_account_:instance/_instance-id_",
+# 		}
+# 	]
+# }
+#
+# Fill in _region_, _account_, and _instance-id_.
+#
+# Add github actions secrets:
+#
+# CURSOR_INSTANCE_ID
+# CURSOR_REGION
+# CURSOR_AWS_ACCESS_KEY_ID
+# CURSOR_AWS_SECRET_ACCESS_KEY

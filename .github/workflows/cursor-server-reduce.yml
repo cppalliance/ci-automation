@@ -45,4 +45,4 @@ jobs:
       - name: Resize Instance
         if: ${{ github.event_name == 'workflow_dispatch' || steps.blocker.outputs.block == 'no' }}
         run: |
-            aws ssm start-automation-execution --document-name "AWS-ResizeInstance" --document-version "\$DEFAULT" --parameters '{"InstanceId":["${{ secrets.CURSOR_INSTANCE_ID }}"],"InstanceType":["t3.micro"],"SleepWait":["PT5S"]}' --region ${{ secrets.CURSOR_REGION }}
+            aws ssm start-automation-execution --document-name "AWS-ResizeInstance" --document-version "\$DEFAULT" --parameters '{"InstanceId":["${{ secrets.CURSOR_INSTANCE_ID }}"],"InstanceType":["t3.small"],"SleepWait":["PT5S"]}' --region ${{ secrets.CURSOR_REGION }}

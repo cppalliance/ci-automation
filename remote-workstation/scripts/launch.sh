@@ -52,7 +52,7 @@ ls
 # Optionally set another $EXTRA_BOOST_LIBRARIES in the calling script.
 # Otherwise use these defaults.
 if [ -z "${EXTRA_BOOST_LIBRARIES}" ]; then
-    EXTRA_BOOST_LIBRARIES="cppalliance/buffers cppalliance/capy cppalliance/http"
+    EXTRA_BOOST_LIBRARIES="cppalliance/buffers cppalliance/capy cppalliance/http cppalliance/corosio"
 fi 
 for EXTRA_LIB in ${EXTRA_BOOST_LIBRARIES}; do
     REFRESH_EXTRA_LIB="ok"

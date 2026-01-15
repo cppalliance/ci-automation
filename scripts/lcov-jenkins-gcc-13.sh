@@ -30,7 +30,7 @@ sudo apt-get install -y python3-pip sudo git curl jq
 sudo apt-get install -y libdatetime-format-dateparse-perl
 
 export B2_TOOLSET="gcc-13"
-export LCOV_VERSION="v2.1"
+export LCOV_VERSION="v2.3"
 export LCOV_OPTIONS="--ignore-errors mismatch"
 
 export REPO_NAME=${ORGANIZATION}/${REPONAME}
@@ -48,6 +48,7 @@ run_coverage_reports () {
     BOOST_CI_SRC_FOLDER=$(pwd)
     export BOOST_CI_SRC_FOLDER
 
+    echo "In run_coverage_reports. Running common_install.sh"
     # shellcheck source=/dev/null
     . ./ci/common_install.sh
 
@@ -61,6 +62,7 @@ run_coverage_reports () {
         fi
     done
 
+    echo "In run_coverage_reports. Running codecov.sh"
     cd "$BOOST_ROOT/libs/$SELF"
     ci/travis/codecov.sh
 

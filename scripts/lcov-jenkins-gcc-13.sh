@@ -6,6 +6,8 @@ set -ex
 
 echo "Starting lcov-jenkins-gcc-13.sh"
 
+timestamp=$(date +"%Y-%m-%d-%H-%M-%S")
+
 env
 
 if [ -z "${REPONAME}" ]; then
@@ -93,6 +95,9 @@ run_coverage_reports () {
     #########################
 
     GCOVRFILTER=".*/$REPONAME/.*"
+    if [ -d "gcovr" ]; then
+        rm -r gcovr
+    fi
     mkdir gcovr
     mkdir -p json
     cd ../boost-root
@@ -117,7 +122,7 @@ run_coverage_reports
 # preparation:
 
 # "$CHANGE_TARGET" is a variable from multibranch-pipeline.
-TARGET_BRANCH="${CHANGE_TARGET}"
+TARGET_BRANCH="${CHANGE_TARGET:-develop}"
 
 cd "$BOOST_CI_SRC_FOLDER"
 BOOST_CI_SRC_FOLDER_ORIG=$BOOST_CI_SRC_FOLDER
@@ -126,6 +131,9 @@ cd ..
 # It was possible to have the new folder be named $SELF.
 # But just to be extra careful, choose another name such as
 ADIRNAME=${SELF}-target-branch-iteration
+if [ -d "$ADIRNAME" ]; then
+    mv "$ADIRNAME" "$ADIRNAME.bck.$timestamp"
+fi
 git clone -b "$TARGET_BRANCH" "https://github.com/$ORGANIZATION/$SELF" "$ADIRNAME"
 cd "$ADIRNAME"
 # The "new" BOOST_CI_SRC_FOLDER:

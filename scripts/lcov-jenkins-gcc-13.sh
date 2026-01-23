@@ -31,6 +31,15 @@ sudo apt-get install -y python3-pip sudo git curl jq
 # sudo apt-get install -y libcapture-tiny-perl libdatetime-perl libdatetime-format-dateparse-perl
 sudo apt-get install -y libdatetime-format-dateparse-perl
 
+# expecting a venv to already exist in /opt/venv.
+export pythonvirtenvpath=/opt/venv
+if [ -f ${pythonvirtenvpath}/bin/activate ]; then
+    # shellcheck source=/dev/null
+    source ${pythonvirtenvpath}/bin/activate
+fi
+
+pip3 install --upgrade gcovr || true
+
 export B2_TOOLSET="gcc-13"
 export LCOV_VERSION="v2.3"
 export LCOV_OPTIONS="--ignore-errors mismatch"
@@ -39,7 +48,12 @@ export REPO_NAME=${ORGANIZATION}/${REPONAME}
 export PATH=~/.local/bin:/usr/local/bin:$PATH
 export BOOST_CI_CODECOV_IO_UPLOAD="skip"
 
-run_coverage_reports () {
+# lcov will be present later
+export PATH=/tmp/lcov/bin:$PATH
+# command -v lcov
+# lcov --version
+
+collect_coverage () {
 
     git clone https://github.com/boostorg/boost-ci.git boost-ci-cloned --depth 1
     cp -prf boost-ci-cloned/ci .
@@ -50,7 +64,7 @@ run_coverage_reports () {
     BOOST_CI_SRC_FOLDER=$(pwd)
     export BOOST_CI_SRC_FOLDER
 
-    echo "In run_coverage_reports. Running common_install.sh"
+    echo "In collect_coverage. Running common_install.sh"
     # shellcheck source=/dev/null
     . ./ci/common_install.sh
 
@@ -64,58 +78,38 @@ run_coverage_reports () {
         fi
     done
 
-    echo "In run_coverage_reports. Running codecov.sh"
+    echo "In collect_coverage. Running codecov.sh"
     cd "$BOOST_ROOT/libs/$SELF"
     ci/travis/codecov.sh
 
-    # expecting a venv to already exist in /opt/venv.
-    export pythonvirtenvpath=/opt/venv
-    if [ -f ${pythonvirtenvpath}/bin/activate ]; then
-        # shellcheck source=/dev/null
-        source ${pythonvirtenvpath}/bin/activate
-    fi
-
-    pip3 install gcovr || true
-
     cd "$BOOST_CI_SRC_FOLDER"
 
-    export PATH=/tmp/lcov/bin:$PATH
-    command -v lcov
-    lcov --version
-
     lcov --ignore-errors unused --remove coverage.info -o coverage_filtered.info '*/test/*' '*/extra/*'
-
-    # Now the tracefile is coverage_filtered.info
-    genhtml -o genhtml coverage_filtered.info
-
-    #########################
-    #
-    # gcovr
-    #
-    #########################
-
-    GCOVRFILTER=".*/$REPONAME/.*"
-    if [ -d "gcovr" ]; then
-        rm -r gcovr
-    fi
-    mkdir gcovr
-    mkdir -p json
-    cd ../boost-root
-    gcovr --merge-mode-functions separate -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
-    ls -al "$BOOST_CI_SRC_FOLDER/gcovr"
-
-    gcovr --merge-mode-functions separate -p --json-summary --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/summary.json"
-    # jq . $BOOST_CI_SRC_FOLDER/json/summary.json
-
-    gcovr --merge-mode-functions separate -p --json --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --output "$BOOST_CI_SRC_FOLDER/json/coverage.json"
-    # jq . $BOOST_CI_SRC_FOLDER/json/coverage.json
 }
 
-run_coverage_reports
+collect_coverage
+
+# Now the tracefile is coverage_filtered.info
+genhtml -o genhtml coverage_filtered.info
+
+#########################
+#
+# gcovr
+#
+#########################
+
+GCOVRFILTER=".*/$REPONAME/.*"
+if [ -d "gcovr" ]; then
+    rm -r gcovr
+fi
+mkdir gcovr
+cd ../boost-root
+gcovr --merge-mode-functions separate -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
+ls -al "$BOOST_CI_SRC_FOLDER/gcovr"
 
 #########################################################################
 #
-# RUN EVERYTHING AGAIN the same way on the target branch, usually develop
+# Collect coverage again the same way on the target branch, usually develop
 #
 #########################################################################
 
@@ -144,27 +138,31 @@ export BOOST_CI_SRC_FOLDER_TARGET
 
 # done with prep, now everything is the same as before
 
-run_coverage_reports
+collect_coverage
 
-# Done with building target branch. Return everything back.
+# diff coverage report generation
 
 BOOST_CI_SRC_FOLDER=$BOOST_CI_SRC_FOLDER_ORIG
-cd "$BOOST_CI_SRC_FOLDER"
+cd "$BOOST_CI_SRC_FOLDER/.."
 
-#########################################
-#
-# gcov-compare.py. download and run it.
-#
-#########################################
-
-mkdir -p ~/.local/bin
-GITHUB_REPO_URL="https://github.com/cppalliance/ci-automation/raw/master"
-DIR="scripts"
-FILENAME="gcov-compare.py"
-URL="${GITHUB_REPO_URL}/$DIR/$FILENAME"
-FILE=~/.local/bin/$FILENAME 
-if [ ! -f "$FILE" ]; then
-    curl -s -S --retry 10 -L -o $FILE $URL && chmod 755 $FILE
+if [ ! -d diff-coverage-report ]; then
+    git clone https://github.com/grisumbras/diff-coverage-report
+else
+    cd diff-coverage-report
+    git pull || true
+    cd ..
 fi
 
-$FILE "$BOOST_CI_SRC_FOLDER_ORIG/json/summary.json" "$BOOST_CI_SRC_FOLDER_TARGET/json/summary.json" > gcovr/coverage_diff.txt
+diff -Nru0 --minimal -x '.git' -x '*.info' -x genhtml -x gcovr -x diff-report \
+     "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" | tee difference
+
+diff-coverage-report/diff-coverage-report.py -D difference \
+    -O "$BOOST_CI_SRC_FOLDER/diff-report" \
+    -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
+    -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
+    -S "$BOOST_CI_SRC_FOLDER_ORIG" \
+    -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
+       "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
+
+# Done, return everything back.
+cd "$BOOST_CI_SRC_FOLDER"

@@ -37,7 +37,8 @@ if [ -f ${pythonvirtenvpath}/bin/activate ]; then
     # shellcheck source=/dev/null
     source ${pythonvirtenvpath}/bin/activate
 fi
-pip3 install gcovr || true
+
+pip3 install --upgrade gcovr || true
 
 export B2_TOOLSET="gcc-13"
 export LCOV_VERSION="v2.3"
@@ -47,9 +48,10 @@ export REPO_NAME=${ORGANIZATION}/${REPONAME}
 export PATH=~/.local/bin:/usr/local/bin:$PATH
 export BOOST_CI_CODECOV_IO_UPLOAD="skip"
 
+# lcov will be present later
 export PATH=/tmp/lcov/bin:$PATH
-command -v lcov
-lcov --version
+# command -v lcov
+# lcov --version
 
 collect_coverage () {
 

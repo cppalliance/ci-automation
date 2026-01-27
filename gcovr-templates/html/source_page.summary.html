@@ -1,0 +1,26 @@
+{# -*- engine: jinja -*- #}
+<div class="source-summary">
+  <div class="source-info">
+    <h2 class="source-filename">{{filename}}</h2>
+    <div class="source-stats">
+      <span class="stat {{lines.class}}">
+        <strong>{{lines.coverage}}%</strong> Lines ({{lines.exec}}/{{lines.total}})
+      </span>
+      <span class="stat {{functions.class}}">
+        <strong>{{functions.coverage}}%</strong> Functions ({{functions.exec}}/{{functions.total}})
+      </span>
+      <span class="stat {{branches.class}}">
+        <strong>{{branches.coverage}}%</strong> Branches ({{branches.exec}}/{{branches.total}})
+      </span>
+    </div>
+  </div>
+
+  <div class="source-controls">
+    <button class="btn btn-toggle show_coveredLine" id="toggle-covered" title="Toggle covered lines">
+      <span class="color-dot covered"></span> Covered
+    </button>
+    <button class="btn btn-toggle show_uncoveredLine" id="toggle-uncovered" title="Toggle uncovered lines">
+      <span class="color-dot uncovered"></span> Uncovered
+    </button>
+  </div>
+</div>

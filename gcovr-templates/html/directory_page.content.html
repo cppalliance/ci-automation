@@ -1,0 +1,81 @@
+{# -*- engine: jinja -*- #}
+{# Check if we have any function or branch data #}
+{% set has_functions = entries | selectattr('functions.coverage', 'ne', '-') | list | length > 0 %}
+{% set has_branches = entries | selectattr('branches.coverage', 'ne', '-') | list | length > 0 %}
+<div class="file-list-container{% if not has_functions %} no-functions{% endif %}{% if not has_branches %} no-branches{% endif %}">
+  <div class="file-list-header">
+    <div class="col-name sortable{% if info.sort_by == 'filename' %} {{info.sorted}}{% endif %}" data-sort="filename">
+      Name
+    </div>
+    <div class="col-coverage sortable{% if info.sort_by == 'lines' %} {{info.sorted}}{% endif %}" data-sort="lines">
+      Coverage
+    </div>
+    <div class="col-lines sortable" data-sort="lines">
+      Lines
+    </div>
+    {% if has_functions %}
+    <div class="col-functions sortable" data-sort="functions">
+      Functions
+    </div>
+    {% endif %}
+    {% if has_branches %}
+    <div class="col-branches sortable{% if info.sort_by == 'branches' %} {{info.sorted}}{% endif %}" data-sort="branches">
+      Branches
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="file-list-body" id="file-list">
+    {% for row in entries %}
+    <div class="file-row {% if row.link and '/' not in row.filename %}file{% else %}directory{% endif %}"
+         data-filename="{{row.filename}}"
+         data-coverage="{{row.lines.sort}}"
+         data-lines="{{row.lines.total}}"
+         data-functions="{{row.functions.sort}}"
+         data-branches="{{row.branches.sort}}">
+
+      <div class="col-name">
+        <span class="file-icon">
+          {% if row.link is none %}
+          <svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M1.75 1A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25v-8.5A1.75 1.75 0 0014.25 3H7.5a.25.25 0 01-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"></path></svg>
+          {% elif '.' in row.filename %}
+          <svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M3.75 1.5a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 00.25-.25V6h-2.75A1.75 1.75 0 019 4.25V1.5H3.75zm6.75.062V4.25c0 .138.112.25.25.25h2.688a.252.252 0 00-.011-.013l-2.914-2.914a.272.272 0 00-.013-.011zM2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0113.25 16h-9.5A1.75 1.75 0 012 14.25V1.75z"></path></svg>
+          {% else %}
+          <svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M1.75 1A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25v-8.5A1.75 1.75 0 0014.25 3H7.5a.25.25 0 01-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"></path></svg>
+          {% endif %}
+        </span>
+        {% if row.link is not none %}
+        <a href="{% if info.single_page %}#{% endif %}{{row.link}}" title="{{row.filename}}">{{row.filename}}</a>
+        {% else %}
+        <span class="no-link">{{row.filename}}</span>
+        {% endif %}
+      </div>
+
+      <div class="col-coverage">
+        <div class="coverage-bar-container">
+          <div class="coverage-bar {{row.lines.class}}" style="width: {% if row.lines.coverage != '-' %}{{row.lines.coverage}}%{% else %}0%{% endif %}"></div>
+        </div>
+        <span class="coverage-percent {{row.lines.class}}">{{row.lines.coverage}}%</span>
+      </div>
+
+      <div class="col-lines">
+        <span class="stat-value">{{row.lines.exec}}</span>
+        <span class="stat-separator">/</span>
+        <span class="stat-total">{{row.lines.total}}</span>
+      </div>
+
+      {% if has_functions %}
+      <div class="col-functions">
+        <span class="stat-value {{row.functions.class}}">{{row.functions.coverage}}%</span>
+      </div>
+      {% endif %}
+
+      {% if has_branches %}
+      <div class="col-branches">
+        <span class="stat-value {{row.branches.class}}">{{row.branches.coverage}}%</span>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>

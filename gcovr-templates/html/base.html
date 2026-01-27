@@ -1,0 +1,99 @@
+{# -*- engine: jinja -*- #}
+<!DOCTYPE html>
+<html class="theme-{{theme}}"{% if (theme == 'dark-blue' or theme == 'dark-green') %} data-color-mode="dark" data-dark-theme="dark"{% endif %}>
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset={{info.encoding}}"/>
+    <title>{% block html_title %}{{info.head}}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style type="text/css">
+{% include "style.css" %}
+    </style>
+    <script>
+{% include "gcovr.js" %}
+    </script>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title-row">
+            <h2><a href="index.html" class="sidebar-title-link">Coverage Report</a></h2>
+            <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle dark/light mode">
+              <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="sidebar-search">
+            <input type="text" id="file-search" placeholder="Search files..." autocomplete="off">
+          </div>
+        </div>
+        <div class="tree-controls">
+          <button class="tree-control-btn" id="expand-all" title="Expand all">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 018 1z"/></svg>
+            Expand
+          </button>
+          <button class="tree-control-btn" id="collapse-all" title="Collapse all">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 8a.5.5 0 01.5-.5h11a.5.5 0 010 1h-11A.5.5 0 012 8z"/></svg>
+            Collapse
+          </button>
+        </div>
+        <nav class="sidebar-nav" id="file-tree">
+          {% block sidebar_tree %}
+          <div class="tree-loading">Loading file tree...</div>
+          {% endblock %}
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="main-header">
+          <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div class="breadcrumb">
+            {% block breadcrumb %}<a href="index.html">Root</a>{% if relative_path %}<span class="separator">/</span><span class="current">{{relative_path | replace("/", " / ")}}</span>{% endif %}{% endblock %}
+          </div>
+          <div class="header-actions">
+            {% block navigation %}
+            {% endblock %}
+          </div>
+        </header>
+
+        <div class="content-wrapper">
+          <section class="summary-section">
+            {% block summary %}
+            {% endblock %}
+          </section>
+
+          <section class="main-section">
+            {% block content %}
+            {% endblock %}
+          </section>
+        </div>
+
+        <footer class="main-footer">
+          Created using <a href="http://gcovr.com/en/{{ 'main' if info.version.endswith('+main') else info.version }}">GCOVR (Version {{ info.version }})</a>
+          at {{info.date}}
+        </footer>
+      </main>
+    </div>
+  </body>
+
+</html>

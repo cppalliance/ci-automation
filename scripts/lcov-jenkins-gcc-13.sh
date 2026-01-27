@@ -106,8 +106,18 @@ if [ -d "gcovr" ]; then
 fi
 mkdir gcovr
 cd ../boost-root
-gcovr --merge-mode-functions separate -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --filter "$GCOVRFILTER" --html --output "$BOOST_CI_SRC_FOLDER/gcovr/index.html"
-ls -al "$BOOST_CI_SRC_FOLDER/gcovr"
+if [ ! -d ci-automation ]; then
+    git clone -b develop https://github.com/cppalliance/ci-automation
+else
+    cd ci-automation
+    git pull || true
+    cd ..
+fi
+
+outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
+python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
+gcovr --merge-mode-functions separate -p --html-nested --html-template-dir=ci-automation/gcovr-templates/html --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
+ls -al "${outputlocation}"
 
 #########################################################################
 #

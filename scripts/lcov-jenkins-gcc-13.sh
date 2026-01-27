@@ -107,7 +107,7 @@ fi
 mkdir gcovr
 cd ../boost-root
 if [ ! -d ci-automation ]; then
-    git clone -b develop https://github.com/cppalliance/ci-automation
+    git clone -b master https://github.com/cppalliance/ci-automation
 else
     cd ci-automation
     git pull || true

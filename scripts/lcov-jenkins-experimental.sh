@@ -162,6 +162,7 @@ diff-coverage-report/diff-coverage-report.py -D difference \
     -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
     -S "$BOOST_CI_SRC_FOLDER_ORIG" \
     -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
+       "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
        "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
 
 # Done, return everything back.

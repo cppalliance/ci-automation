@@ -3,14 +3,14 @@
   <div class="source-info">
     <h2 class="source-filename">{{filename}}</h2>
     <div class="source-stats">
-      <span class="stat {{lines.class|default('')}}">
-        <strong>{{lines.covered_percent|default(lines.coverage)|default(0)}}%</strong> Lines ({{lines.covered|default(lines.exec)|default(0)}}/{{lines.total|default(0)}})
+      <span class="stat {{lines.class}}">
+        <strong>{{lines.coverage}}%</strong> Lines ({{lines.exec}}/{{lines.total}})
       </span>
-      <span class="stat {{functions.class|default('')}}">
-        <strong>{{functions.covered_percent|default(functions.coverage)|default(0)}}%</strong> Functions ({{functions.covered|default(functions.exec)|default(0)}}/{{functions.total|default(0)}})
+      <span class="stat {{functions.class}}">
+        <strong>{{functions.coverage}}%</strong> Functions ({{functions.exec}}/{{functions.total}})
       </span>
-      <span class="stat {{branches.class|default('')}}">
-        <strong>{{branches.covered_percent|default(branches.coverage)|default(0)}}%</strong> Branches ({{branches.covered|default(branches.exec)|default(0)}}/{{branches.total|default(0)}})
+      <span class="stat {{branches.class}}">
+        <strong>{{branches.coverage}}%</strong> Branches ({{branches.exec}}/{{branches.total}})
       </span>
     </div>
   </div>

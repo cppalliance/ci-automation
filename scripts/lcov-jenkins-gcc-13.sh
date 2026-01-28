@@ -115,7 +115,8 @@ else
 fi
 
 outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
-gcovr --merge-mode-functions separate -p --html-nested --html-template-dir=ci-automation/gcovr-templates/html --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
+# gcovr --merge-mode-functions separate -p --html-nested --html-template-dir=ci-automation/gcovr-templates/html --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
+gcovr --merge-mode-functions separate -p --html-nested --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
 ls -al "${outputlocation}"
 
 # Generate tree.json for sidebar navigation

@@ -39,6 +39,7 @@ if [ -f ${pythonvirtenvpath}/bin/activate ]; then
 fi
 
 pip3 install --upgrade gcovr || true
+gcovr --version
 
 export B2_TOOLSET="gcc-13"
 export LCOV_VERSION="v2.3"
@@ -171,14 +172,19 @@ fi
 diff -Nru0 --minimal -x '.git' -x '*.info' -x genhtml -x gcovr -x diff-report \
      "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" | tee difference
 
-diff-coverage-report/diff-coverage-report.py -D difference \
-    -O "$BOOST_CI_SRC_FOLDER/diff-report" \
-    -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
-    -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
-    -S "$BOOST_CI_SRC_FOLDER_ORIG" \
-    -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
-       "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
-       "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
+# diff-coverage-report/diff-coverage-report.py -D difference \
+#     -O "$BOOST_CI_SRC_FOLDER/diff-report" \
+#     -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
+#     -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
+#     -S "$BOOST_CI_SRC_FOLDER_ORIG" \
+#     -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
+#        "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
+#        "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
+
+# In the event that diff-coverage-report.py doesn't run, ensure
+# an empty directory exists anyway to upload to S3.  
+mkdir -p "$BOOST_CI_SRC_FOLDER/diff-report"
+touch "$BOOST_CI_SRC_FOLDER/diff-report/test.txt"
 
 # Done, return everything back.
 cd "$BOOST_CI_SRC_FOLDER"

@@ -38,7 +38,7 @@ if [ -f ${pythonvirtenvpath}/bin/activate ]; then
     source ${pythonvirtenvpath}/bin/activate
 fi
 
-pip install --upgrade gcovr==8.4 || true
+# pip install --upgrade gcovr==8.4 || true
 
 gcovr --version
 

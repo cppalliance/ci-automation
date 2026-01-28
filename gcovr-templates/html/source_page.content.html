@@ -6,21 +6,11 @@
     <div class="source-title">{{filename}}</div>
     <div class="source-actions">
       <button type="button" class="btn btn-sm button_toggle_coveredLine show_coveredLine" value="coveredLine" title="Toggle covered lines">
-        <span class="btn-count">{{lines.exec - lines.partial}}</span> covered
+        <span class="btn-count">{{lines.covered|default(0)}}</span> covered
       </button>
       <button type="button" class="btn btn-sm button_toggle_uncoveredLine show_uncoveredLine" value="uncoveredLine" title="Toggle uncovered lines">
-        <span class="btn-count">{{lines.uncovered}}</span> uncovered
+        <span class="btn-count">{{lines.total|default(0) - lines.covered|default(0)}}</span> uncovered
       </button>
-      {% if lines.partial > 0 %}
-      <button type="button" class="btn btn-sm button_toggle_partialCoveredLine show_partialCoveredLine" value="partialCoveredLine" title="Toggle partial covered lines">
-        <span class="btn-count">{{lines.partial}}</span> partial
-      </button>
-      {% endif %}
-      {% if lines.excluded > 0 %}
-      <button type="button" class="btn btn-sm button_toggle_excludedLine show_excludedLine" value="excludedLine" title="Toggle excluded lines">
-        <span class="btn-count">{{lines.excluded}}</span> excluded
-      </button>
-      {% endif %}
     </div>
   </div>
 

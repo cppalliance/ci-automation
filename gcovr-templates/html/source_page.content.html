@@ -1,24 +1,26 @@
 {# -*- engine: jinja -*- #}
 {# Check if we have any branch data #}
 {% set has_branches = source_lines | selectattr('line_branches', 'defined') | selectattr('line_branches') | list | length > 0 %}
+{% set partial_count = lines.partial if lines.partial is defined else 0 %}
+{% set excluded_count = lines.excluded if lines.excluded is defined else 0 %}
 <div class="source-container{% if not has_branches %} no-branches{% endif %}">
   <div class="source-header">
     <div class="source-title">{{filename}}</div>
     <div class="source-actions">
       <button type="button" class="btn btn-sm button_toggle_coveredLine show_coveredLine" value="coveredLine" title="Toggle covered lines">
-        <span class="btn-count">{{lines.exec - lines.partial}}</span> covered
+        <span class="btn-count">{{lines.exec - partial_count}}</span> covered
       </button>
       <button type="button" class="btn btn-sm button_toggle_uncoveredLine show_uncoveredLine" value="uncoveredLine" title="Toggle uncovered lines">
-        <span class="btn-count">{{lines.uncovered}}</span> uncovered
+        <span class="btn-count">{{lines.total - lines.exec}}</span> uncovered
       </button>
-      {% if lines.partial > 0 %}
+      {% if partial_count > 0 %}
       <button type="button" class="btn btn-sm button_toggle_partialCoveredLine show_partialCoveredLine" value="partialCoveredLine" title="Toggle partial covered lines">
-        <span class="btn-count">{{lines.partial}}</span> partial
+        <span class="btn-count">{{partial_count}}</span> partial
       </button>
       {% endif %}
-      {% if lines.excluded > 0 %}
+      {% if excluded_count > 0 %}
       <button type="button" class="btn btn-sm button_toggle_excludedLine show_excludedLine" value="excludedLine" title="Toggle excluded lines">
-        <span class="btn-count">{{lines.excluded}}</span> excluded
+        <span class="btn-count">{{excluded_count}}</span> excluded
       </button>
       {% endif %}
     </div>

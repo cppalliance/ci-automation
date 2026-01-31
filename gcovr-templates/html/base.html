@@ -71,8 +71,7 @@
             {% block breadcrumb %}<a href="index.html">Root</a>{% if relative_path %}<span class="separator">/</span><span class="current">{{relative_path | replace("/", " / ")}}</span>{% endif %}{% endblock %}
           </div>
           <div class="header-actions">
-            {% block navigation %}
-            {% endblock %}
+            {% block navigation %}{% endblock %}
           </div>
         </header>
 

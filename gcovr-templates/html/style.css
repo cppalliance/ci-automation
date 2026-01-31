@@ -908,6 +908,12 @@ a:hover {
   font-size: 13px;
 }
 
+.file-list-header .col-lines,
+.file-list-header .col-functions,
+.file-list-header .col-branches {
+  justify-content: flex-end;
+}
+
 .stat-value {
   font-weight: 500;
 }

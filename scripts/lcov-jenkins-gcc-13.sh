@@ -2,9 +2,49 @@
 
 # See docs at https://github.com/cppalliance/ci-automation/blob/master/scripts/docs/README.md
 
-set -ex
+set -e
 
-echo "Starting lcov-jenkins-gcc-13.sh"
+scriptname="lcov-jenkins-gcc-13.sh"
+echo "Starting $scriptname"
+
+# READ IN COMMAND-LINE OPTIONS
+
+TEMP=$(getopt -o h:: --long help::,skip-genhtml::,skip-diff-report::,only-gcovr:: -- "$@")
+eval set -- "$TEMP"
+
+# extract options and their arguments into variables.
+while true ; do
+    case "$1" in
+        -h|--help)
+            helpmessage="""
+usage: $scriptname [-h] [--skip-genhtml] [--skip-diff-report] [--only-gcovr]
+
+Builds library documentation.
+
+optional arguments:
+  -h, --help            Show this help message and exit
+  --skip-genhtml        Don't run genhtml
+  --skip-diff-report    Don't run the diff-report
+  --only-gcovr          Only run the main gcovr report, which is the same as the above skip options.
+                        If the goal is to run gcovr, this is the preferred method
+                        since this flag can be modified to skip other steps later.
+"""
+
+            echo ""
+            echo "$helpmessage" ;
+            echo ""
+            exit 0
+            ;;
+        --skip-genhtml)
+            skipgenhtmloption="yes" ; shift 2 ;;
+        --skip-diff-report)
+            skipdiffreportoption="yes" ; shift 2 ;;
+        --only-gcovr)
+            skipdiffreportoption="yes" ; skipgenhtmloption="yes" ; shift 2 ;;
+        --) shift ; break ;;
+        *) echo "Internal error!" ; exit 1 ;;
+    esac
+done
 
 timestamp=$(date +"%Y-%m-%d-%H-%M-%S")
 
@@ -94,7 +134,9 @@ collect_coverage () {
 collect_coverage
 
 # Now the tracefile is coverage_filtered.info
-genhtml -o genhtml coverage_filtered.info
+if [ ! "$skipgenhtmloption" = "yes" ]; then
+    genhtml -o genhtml coverage_filtered.info
+fi
 
 #########################
 #
@@ -126,66 +168,76 @@ python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
 
 #########################################################################
 #
-# Collect coverage again the same way on the target branch, usually develop
+# The following section is to generate a diff-report
 #
 #########################################################################
 
-# preparation:
+if [ ! "$skipdiffreportoption" = "yes" ]; then
 
-# "$CHANGE_TARGET" is a variable from multibranch-pipeline.
-TARGET_BRANCH="${CHANGE_TARGET:-develop}"
+    #########################
+    #
+    # Collect coverage again the same way on the target branch, usually develop
+    #
+    #########################
 
-cd "$BOOST_CI_SRC_FOLDER"
-BOOST_CI_SRC_FOLDER_ORIG=$BOOST_CI_SRC_FOLDER
-rm -rf ../boost-root
-cd ..
-# It was possible to have the new folder be named $SELF.
-# But just to be extra careful, choose another name such as
-ADIRNAME=${SELF}-target-branch-iteration
-if [ -d "$ADIRNAME" ]; then
-    mv "$ADIRNAME" "$ADIRNAME.bck.$timestamp"
-fi
-git clone -b "$TARGET_BRANCH" "https://github.com/$ORGANIZATION/$SELF" "$ADIRNAME"
-cd "$ADIRNAME"
-# The "new" BOOST_CI_SRC_FOLDER:
-BOOST_CI_SRC_FOLDER=$(pwd)
-export BOOST_CI_SRC_FOLDER
-BOOST_CI_SRC_FOLDER_TARGET=$(pwd)
-export BOOST_CI_SRC_FOLDER_TARGET
+    # preparation:
 
-# done with prep, now everything is the same as before
+    # "$CHANGE_TARGET" is a variable from multibranch-pipeline.
+    TARGET_BRANCH="${CHANGE_TARGET:-develop}"
 
-collect_coverage
-
-# diff coverage report generation
-
-BOOST_CI_SRC_FOLDER=$BOOST_CI_SRC_FOLDER_ORIG
-cd "$BOOST_CI_SRC_FOLDER/.."
-
-if [ ! -d diff-coverage-report ]; then
-    git clone https://github.com/grisumbras/diff-coverage-report
-else
-    cd diff-coverage-report
-    git pull || true
+    cd "$BOOST_CI_SRC_FOLDER"
+    BOOST_CI_SRC_FOLDER_ORIG=$BOOST_CI_SRC_FOLDER
+    rm -rf ../boost-root
     cd ..
+    # It was possible to have the new folder be named $SELF.
+    # But just to be extra careful, choose another name such as
+    ADIRNAME=${SELF}-target-branch-iteration
+    if [ -d "$ADIRNAME" ]; then
+        mv "$ADIRNAME" "$ADIRNAME.bck.$timestamp"
+    fi
+    git clone -b "$TARGET_BRANCH" "https://github.com/$ORGANIZATION/$SELF" "$ADIRNAME"
+    cd "$ADIRNAME"
+    # The "new" BOOST_CI_SRC_FOLDER:
+    BOOST_CI_SRC_FOLDER=$(pwd)
+    export BOOST_CI_SRC_FOLDER
+    BOOST_CI_SRC_FOLDER_TARGET=$(pwd)
+    export BOOST_CI_SRC_FOLDER_TARGET
+
+    # done with prep, now everything is the same as before
+
+    collect_coverage
+
+    # diff coverage report generation
+
+    BOOST_CI_SRC_FOLDER=$BOOST_CI_SRC_FOLDER_ORIG
+    cd "$BOOST_CI_SRC_FOLDER/.."
+
+    if [ ! -d diff-coverage-report ]; then
+        git clone https://github.com/grisumbras/diff-coverage-report
+    else
+        cd diff-coverage-report
+        git pull || true
+        cd ..
+    fi
+
+    diff -Nru0 --minimal -x '.git' -x '*.info' -x genhtml -x gcovr -x diff-report \
+         "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" | tee difference
+
+    # diff-coverage-report/diff-coverage-report.py -D difference \
+    #     -O "$BOOST_CI_SRC_FOLDER/diff-report" \
+    #     -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
+    #     -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
+    #     -S "$BOOST_CI_SRC_FOLDER_ORIG" \
+    #     -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
+    #        "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
+    #        "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
+
+    # In the event that diff-coverage-report.py doesn't run, ensure
+    # an empty directory exists anyway to upload to S3.
+    mkdir -p "$BOOST_CI_SRC_FOLDER/diff-report"
+    touch "$BOOST_CI_SRC_FOLDER/diff-report/test.txt"
+
+    # Done, return everything back.
+    cd "$BOOST_CI_SRC_FOLDER"
+
 fi
-
-diff -Nru0 --minimal -x '.git' -x '*.info' -x genhtml -x gcovr -x diff-report \
-     "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" | tee difference
-
-# diff-coverage-report/diff-coverage-report.py -D difference \
-#     -O "$BOOST_CI_SRC_FOLDER/diff-report" \
-#     -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
-#     -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
-#     -S "$BOOST_CI_SRC_FOLDER_ORIG" \
-#     -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
-#        "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
-#        "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
-
-# In the event that diff-coverage-report.py doesn't run, ensure
-# an empty directory exists anyway to upload to S3.  
-mkdir -p "$BOOST_CI_SRC_FOLDER/diff-report"
-touch "$BOOST_CI_SRC_FOLDER/diff-report/test.txt"
-
-# Done, return everything back.
-cd "$BOOST_CI_SRC_FOLDER"

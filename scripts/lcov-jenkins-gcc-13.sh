@@ -223,14 +223,14 @@ if [ ! "$skipdiffreportoption" = "yes" ]; then
     diff -Nru0 --minimal -x '.git' -x '*.info' -x genhtml -x gcovr -x diff-report \
          "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" | tee difference
 
-    # diff-coverage-report/diff-coverage-report.py -D difference \
-    #     -O "$BOOST_CI_SRC_FOLDER/diff-report" \
-    #     -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
-    #     -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
-    #     -S "$BOOST_CI_SRC_FOLDER_ORIG" \
-    #     -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
-    #        "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
-    #        "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
+    diff-coverage-report/diff-coverage-report.py -D difference \
+        -O "$BOOST_CI_SRC_FOLDER/diff-report" \
+        -B "$BOOST_CI_SRC_FOLDER_TARGET/coverage_filtered.info" \
+        -T "$BOOST_CI_SRC_FOLDER_ORIG/coverage_filtered.info" \
+        -S "$BOOST_CI_SRC_FOLDER_ORIG" \
+        -P "$BOOST_CI_SRC_FOLDER_TARGET" "$BOOST_CI_SRC_FOLDER_ORIG" \
+           "$BOOST_ROOT/libs/$SELF"      "$BOOST_CI_SRC_FOLDER_ORIG" \
+           "$BOOST_ROOT/boost"           "$BOOST_CI_SRC_FOLDER_ORIG/include/boost"
 
     # In the event that diff-coverage-report.py doesn't run, ensure
     # an empty directory exists anyway to upload to S3.

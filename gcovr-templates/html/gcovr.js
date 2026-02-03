@@ -7,6 +7,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     initSidebar();
+    initMobileMenu();
     initFileTree();
     initBreadcrumbs();
     initSearch();
@@ -93,22 +94,68 @@
   // ===========================================
 
   function initTheme() {
+    const selector = document.getElementById('theme-selector');
     const toggle = document.getElementById('theme-toggle');
-    const savedTheme = localStorage.getItem('gcovr-theme');
+    const menu = document.getElementById('theme-menu');
+    const label = toggle ? toggle.querySelector('.theme-label') : null;
+    const options = menu ? menu.querySelectorAll('.theme-option') : [];
+    const savedTheme = localStorage.getItem('gcovr-theme') || 'system';
 
-    // Apply saved theme or default to dark
-    if (savedTheme) {
-      document.documentElement.setAttribute('data-theme', savedTheme);
+    // Get system preference
+    function getSystemTheme() {
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     }
 
-    if (toggle) {
-      toggle.addEventListener('click', function() {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('gcovr-theme', next);
+    // Apply theme to document
+    function applyTheme(theme) {
+      const effectiveTheme = theme === 'system' ? getSystemTheme() : theme;
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
+      document.documentElement.setAttribute('data-theme-setting', theme);
+      if (label) {
+        label.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+      }
+      // Update active state in menu
+      options.forEach(function(opt) {
+        opt.classList.toggle('active', opt.getAttribute('data-theme') === theme);
       });
     }
+
+    // Apply saved theme
+    applyTheme(savedTheme);
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function() {
+      const current = localStorage.getItem('gcovr-theme') || 'system';
+      if (current === 'system') {
+        applyTheme('system');
+      }
+    });
+
+    // Toggle menu
+    if (toggle && selector) {
+      toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        selector.classList.toggle('open');
+      });
+    }
+
+    // Handle option selection
+    options.forEach(function(option) {
+      option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const theme = option.getAttribute('data-theme');
+        localStorage.setItem('gcovr-theme', theme);
+        applyTheme(theme);
+        selector.classList.remove('open');
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+      if (selector && !selector.contains(e.target)) {
+        selector.classList.remove('open');
+      }
+    });
   }
 
   // ===========================================
@@ -149,8 +196,9 @@
   function initSidebar() {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.getElementById('sidebar-toggle');
+    const header = sidebar ? sidebar.querySelector('.sidebar-header') : null;
 
-    if (!sidebar || !toggle) return;
+    if (!sidebar) return;
 
     // Load saved state
     const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -158,27 +206,98 @@
       sidebar.classList.add('collapsed');
     }
 
-    toggle.addEventListener('click', function() {
-      sidebar.classList.toggle('collapsed');
-      localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
-    });
+    // Toggle button
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        sidebar.classList.remove('hover-expand');
+        localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+      });
+    }
 
-    // Mobile: open sidebar when clicked outside should close it
-    document.addEventListener('click', function(e) {
-      if (window.innerWidth <= 1024) {
-        if (sidebar.classList.contains('open') &&
-            !sidebar.contains(e.target) &&
-            e.target !== toggle &&
-            !toggle.contains(e.target)) {
-          sidebar.classList.remove('open');
+    // Hover expand - expands when hovering sidebar content (not header)
+    var hoverTimeout = null;
+    var HOVER_DELAY = 150; // ms delay before expanding
+    var isOverContent = false;
+
+    function scheduleExpand() {
+      if (hoverTimeout) return; // already scheduled
+      if (sidebar.classList.contains('hover-expand')) return; // already expanded
+      hoverTimeout = setTimeout(function() {
+        if (isOverContent) {
+          sidebar.classList.add('hover-expand');
         }
+        hoverTimeout = null;
+      }, HOVER_DELAY);
+    }
+
+    function cancelExpand() {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = null;
+      }
+      sidebar.classList.remove('hover-expand');
+    }
+
+    sidebar.addEventListener('mouseenter', function(e) {
+      if (!sidebar.classList.contains('collapsed')) return;
+      // Check if entering over content area (not header)
+      if (!header.contains(e.target)) {
+        isOverContent = true;
+        scheduleExpand();
       }
     });
 
-    // Mobile toggle
-    toggle.addEventListener('click', function() {
-      if (window.innerWidth <= 1024) {
-        sidebar.classList.toggle('open');
+    sidebar.addEventListener('mousemove', function(e) {
+      if (!sidebar.classList.contains('collapsed')) return;
+      var wasOverContent = isOverContent;
+      isOverContent = !header.contains(e.target);
+
+      if (isOverContent && !wasOverContent && !sidebar.classList.contains('hover-expand')) {
+        scheduleExpand();
+      }
+    });
+
+    sidebar.addEventListener('mouseleave', function() {
+      isOverContent = false;
+      cancelExpand();
+    });
+  }
+
+  // ===========================================
+  // Mobile Menu
+  // ===========================================
+
+  function initMobileMenu() {
+    var sidebar = document.getElementById('sidebar');
+    var menuBtn = document.getElementById('mobile-menu-btn');
+    var backdrop = document.getElementById('sidebar-backdrop');
+
+    if (!menuBtn || !sidebar) return;
+
+    // Open sidebar on hamburger click
+    menuBtn.addEventListener('click', function() {
+      sidebar.classList.add('mobile-open');
+    });
+
+    // Close on backdrop click
+    if (backdrop) {
+      backdrop.addEventListener('click', function() {
+        sidebar.classList.remove('mobile-open');
+      });
+    }
+
+    // Close when clicking a navigation link
+    sidebar.addEventListener('click', function(e) {
+      if (e.target.closest('a[href]')) {
+        sidebar.classList.remove('mobile-open');
+      }
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+        sidebar.classList.remove('mobile-open');
       }
     });
   }
@@ -260,6 +379,27 @@
     }
   }
 
+  // Clean relative path prefixes like '../../../' from names
+  function cleanPathName(name) {
+    if (!name) return 'unknown';
+    // Remove leading ./ or ../
+    while (name.indexOf('./') === 0 || name.indexOf('../') === 0) {
+      if (name.indexOf('./') === 0) {
+        name = name.substring(2);
+      } else if (name.indexOf('../') === 0) {
+        name = name.substring(3);
+      }
+    }
+    return name || 'unknown';
+  }
+
+  // Get just the filename from a path
+  function getDisplayName(name) {
+    var cleaned = cleanPathName(name);
+    var lastSlash = cleaned.lastIndexOf('/');
+    return lastSlash >= 0 ? cleaned.substring(lastSlash + 1) : cleaned;
+  }
+
   function createTreeItem(item) {
     var hasChildren = item.children && item.children.length > 0;
     var isDirectory = item.isDirectory || hasChildren;
@@ -312,8 +452,9 @@
     header.appendChild(icon);
 
     // Label (with link if available)
-    // Use fullPath for tooltip if available, otherwise use name
-    var tooltipText = item.fullPath || item.name;
+    // Clean the display name to remove relative path prefixes like '../../../'
+    var displayName = getDisplayName(item.name);
+    var tooltipText = cleanPathName(item.fullPath || item.name);
     var label = document.createElement('span');
     label.className = 'tree-label';
     // Apply coverage class for coloring
@@ -324,11 +465,11 @@
     if (item.link) {
       var link = document.createElement('a');
       link.href = item.link;
-      link.textContent = item.name;
+      link.textContent = displayName;
       link.title = tooltipText;
       label.appendChild(link);
     } else {
-      label.textContent = item.name;
+      label.textContent = displayName;
     }
     header.appendChild(label);
 

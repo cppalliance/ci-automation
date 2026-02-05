@@ -6,6 +6,7 @@
   // Wait for DOM ready
   document.addEventListener('DOMContentLoaded', function() {
     initTheme();
+    initFontSize();
     initSidebar();
     initMobileMenu();
     initFileTree();
@@ -159,6 +160,101 @@
   }
 
   // ===========================================
+  // Font Size Control
+  // ===========================================
+
+  function initFontSize() {
+    var slider = document.getElementById('font-size-slider');
+    var decreaseBtn = document.getElementById('font-decrease');
+    var increaseBtn = document.getElementById('font-increase');
+    var fontSizeSelector = document.getElementById('font-size-selector');
+    var fontSizeToggle = document.getElementById('font-size-toggle');
+    var fontSizeMenu = document.getElementById('font-size-menu');
+    var fontSizeOptions = fontSizeMenu ? fontSizeMenu.querySelectorAll('.font-size-option') : [];
+    if (!slider) return;
+
+    // Font size steps: 80%, 90%, 100%, 110%, 120% (100% is middle)
+    var sizes = [80, 90, 100, 110, 120];
+
+    // Load saved preference
+    var saved = localStorage.getItem('gcovr-font-size');
+    var currentIndex = 2; // default to 100% (index 2)
+    if (saved) {
+      var savedIndex = sizes.indexOf(parseInt(saved, 10));
+      if (savedIndex !== -1) {
+        currentIndex = savedIndex;
+      }
+    }
+
+    function updateMenuState(index) {
+      fontSizeOptions.forEach(function(opt) {
+        var optIndex = parseInt(opt.getAttribute('data-size'), 10);
+        opt.classList.toggle('active', optIndex === index);
+      });
+    }
+
+    function applyFontSize(index) {
+      currentIndex = index;
+      var size = sizes[index];
+      var baseSize = 15 * (size / 100);
+      document.documentElement.style.setProperty('--font-size-base', baseSize + 'px');
+      slider.value = index;
+      localStorage.setItem('gcovr-font-size', size);
+      updateMenuState(index);
+    }
+
+    // Set initial slider position and apply font size
+    applyFontSize(currentIndex);
+
+    // Listen for slider changes
+    slider.addEventListener('input', function() {
+      applyFontSize(parseInt(this.value, 10));
+    });
+
+    // Decrease button (small A)
+    if (decreaseBtn) {
+      decreaseBtn.addEventListener('click', function() {
+        if (currentIndex > 0) {
+          applyFontSize(currentIndex - 1);
+        }
+      });
+    }
+
+    // Increase button (large A)
+    if (increaseBtn) {
+      increaseBtn.addEventListener('click', function() {
+        if (currentIndex < sizes.length - 1) {
+          applyFontSize(currentIndex + 1);
+        }
+      });
+    }
+
+    // Font size selector menu (collapsed state)
+    if (fontSizeToggle && fontSizeSelector) {
+      fontSizeToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fontSizeSelector.classList.toggle('open');
+      });
+
+      fontSizeOptions.forEach(function(opt) {
+        opt.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var sizeIndex = parseInt(this.getAttribute('data-size'), 10);
+          applyFontSize(sizeIndex);
+          fontSizeSelector.classList.remove('open');
+        });
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!fontSizeSelector.contains(e.target)) {
+          fontSizeSelector.classList.remove('open');
+        }
+      });
+    }
+  }
+
+  // ===========================================
   // Tree Controls (Expand/Collapse All)
   // ===========================================
 
@@ -215,10 +311,21 @@
       });
     }
 
-    // Hover expand - expands when hovering sidebar content (not header)
+    // Hover expand - expands when hovering sidebar content (not header or no-expand zones)
     var hoverTimeout = null;
     var HOVER_DELAY = 150; // ms delay before expanding
     var isOverContent = false;
+
+    // Check if element is within a no-expand zone
+    function isInNoExpandZone(el) {
+      while (el && el !== sidebar) {
+        if (el.classList && el.classList.contains('no-expand')) {
+          return true;
+        }
+        el = el.parentElement;
+      }
+      return false;
+    }
 
     function scheduleExpand() {
       if (hoverTimeout) return; // already scheduled
@@ -241,8 +348,8 @@
 
     sidebar.addEventListener('mouseenter', function(e) {
       if (!sidebar.classList.contains('collapsed')) return;
-      // Check if entering over content area (not header)
-      if (!header.contains(e.target)) {
+      // Check if entering over content area (not header or no-expand zones)
+      if (!header.contains(e.target) && !isInNoExpandZone(e.target)) {
         isOverContent = true;
         scheduleExpand();
       }
@@ -251,7 +358,7 @@
     sidebar.addEventListener('mousemove', function(e) {
       if (!sidebar.classList.contains('collapsed')) return;
       var wasOverContent = isOverContent;
-      isOverContent = !header.contains(e.target);
+      isOverContent = !header.contains(e.target) && !isInNoExpandZone(e.target);
 
       if (isOverContent && !wasOverContent && !sidebar.classList.contains('hover-expand')) {
         scheduleExpand();
@@ -540,6 +647,9 @@
         sortList(sortKey, !isAscending);
       });
     });
+
+    // Initial sort: directories first, then by filename
+    sortList('filename', true);
   }
 
   function sortList(key, ascending) {
@@ -549,6 +659,12 @@
     const rows = Array.from(container.children);
 
     rows.sort(function(a, b) {
+      // Directories always come first
+      const aIsDir = a.classList.contains('directory');
+      const bIsDir = b.classList.contains('directory');
+      if (aIsDir && !bIsDir) return -1;
+      if (!aIsDir && bIsDir) return 1;
+
       let aVal = a.dataset[key] || a.querySelector('[data-sort]')?.dataset.sort || '';
       let bVal = b.dataset[key] || b.querySelector('[data-sort]')?.dataset.sort || '';
 

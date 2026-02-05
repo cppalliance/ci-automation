@@ -7,7 +7,7 @@
     <title>{% block html_title %}{{info.head}}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <script>
-      // Apply theme immediately to prevent flash
+      // Apply theme and font size immediately to prevent flash
       (function() {
         var saved = localStorage.getItem('gcovr-theme') || 'system';
         var theme = saved;
@@ -16,6 +16,13 @@
         }
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.setAttribute('data-theme-setting', saved);
+
+        // Apply saved font size
+        var fontSize = localStorage.getItem('gcovr-font-size');
+        if (fontSize) {
+          var baseSize = 15 * (parseInt(fontSize, 10) / 100);
+          document.documentElement.style.setProperty('--font-size-base', baseSize + 'px');
+        }
       })();
     </script>
     <style type="text/css">
@@ -63,7 +70,46 @@
           <div class="tree-loading">Loading file tree...</div>
           {% endblock %}
         </nav>
-        <div class="sidebar-footer">
+        <div class="sidebar-footer no-expand">
+          <div class="font-size-control" id="font-size-control" title="Adjust text size">
+            <button class="font-size-a font-size-small" id="font-decrease" title="Decrease text size">A</button>
+            <div class="font-size-slider-container">
+              <div class="font-size-ticks">
+                <span class="tick"></span>
+                <span class="tick"></span>
+                <span class="tick middle"></span>
+                <span class="tick"></span>
+                <span class="tick"></span>
+              </div>
+              <input type="range" id="font-size-slider" min="0" max="4" value="2" step="1" class="font-size-slider">
+            </div>
+            <button class="font-size-a font-size-large" id="font-increase" title="Increase text size">A</button>
+          </div>
+          <div class="font-size-selector" id="font-size-selector">
+            <button class="font-size-toggle" id="font-size-toggle" title="Adjust text size">A</button>
+            <div class="font-size-menu" id="font-size-menu">
+              <button class="font-size-option" data-size="0">
+                <span class="size-label">80%</span>
+                <svg class="check" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>
+              </button>
+              <button class="font-size-option" data-size="1">
+                <span class="size-label">90%</span>
+                <svg class="check" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>
+              </button>
+              <button class="font-size-option" data-size="2">
+                <span class="size-label">100%</span>
+                <svg class="check" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>
+              </button>
+              <button class="font-size-option" data-size="3">
+                <span class="size-label">110%</span>
+                <svg class="check" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>
+              </button>
+              <button class="font-size-option" data-size="4">
+                <span class="size-label">120%</span>
+                <svg class="check" viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="theme-selector" id="theme-selector">
             <button class="theme-toggle" id="theme-toggle" title="Select theme">
               <svg class="icon-system" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/></svg>

@@ -27,18 +27,17 @@
 
   <div class="file-list-body" id="file-list">
     {% for row in entries %}
-    <div class="file-row {% if row.link and '/' not in row.filename %}file{% else %}directory{% endif %}"
-         data-filename="{{row.filename}}"
-         data-coverage="{{row.lines.sort}}"
-         data-lines="{{row.lines.total}}"
-         data-functions="{{row.functions.sort}}"
-         data-branches="{{row.branches.sort}}">
-
       {# Extract clean display name: just filename or last path segment #}
       {% set clean_path = row.filename.rstrip('/') %}
       {% set display_name = clean_path.split('/')[-1] if '/' in clean_path else clean_path %}
       {% set display_name = display_name if display_name else row.filename %}
       {% set is_file = '.' in display_name and not display_name.endswith('...') %}
+    <div class="file-row {% if is_file %}file{% else %}directory{% endif %}"
+         data-filename="{{row.filename}}"
+         data-coverage="{{row.lines.sort}}"
+         data-lines="{{row.lines.total}}"
+         data-functions="{{row.functions.sort}}"
+         data-branches="{{row.branches.sort}}">
       <div class="col-name">
         <span class="file-icon">
           {% if row.link is none %}

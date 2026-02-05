@@ -126,9 +126,8 @@ collect_coverage () {
 
     cd "$BOOST_CI_SRC_FOLDER"
 
-    # was:
-    # lcov --ignore-errors unused --remove coverage.info -o coverage_filtered.info '*/test/*' '*/extra/*'
-    lcov --ignore-errors unused --extract coverage.info "*/boost/$SELF/*" "*/$SELF/src/*" -o coverage_filtered.info
+    lcov --ignore-errors unused --remove coverage.info -o coverage_filtered.info '*/test/*' '*/extra/*' '*/example/*'
+    # lcov --ignore-errors unused --extract coverage.info "*/boost/$SELF/*" "*/$SELF/src/*" -o coverage_filtered.info
 }
 
 collect_coverage

@@ -9,7 +9,7 @@ echo "Starting $scriptname"
 
 # READ IN COMMAND-LINE OPTIONS
 
-TEMP=$(getopt -o h:: --long help::skip-gcovr::,skip-genhtml::,skip-diff-report::,only-gcovr:: -- "$@")
+TEMP=$(getopt -o h:: --long help::,skip-gcovr::,skip-genhtml::,skip-diff-report::,only-gcovr:: -- "$@")
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -132,13 +132,15 @@ collect_coverage () {
 
     # lcov --ignore-errors unused --remove coverage.info -o coverage_filtered.info '*/test/*' '*/extra/*' '*/example/*'
     lcov --ignore-errors unused --extract coverage.info "*/boost/$SELF/*" "*/$SELF/src/*" -o coverage_filtered.info
+    sed "s|${BOOST_ROOT}/boost/$SELF|${BOOST_ROOT}/libs/$SELF/include/boost/$SELF|g" coverage_filtered.info > coverage_remapped.info
+
 }
 
 collect_coverage
 
 # Now the tracefile is coverage_filtered.info
 if [ ! "$skipgenhtmloption" = "yes" ]; then
-    genhtml -o genhtml coverage_filtered.info
+    genhtml -o genhtml coverage_remapped.info
 fi
 
 #########################

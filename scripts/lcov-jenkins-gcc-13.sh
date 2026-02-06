@@ -9,7 +9,7 @@ echo "Starting $scriptname"
 
 # READ IN COMMAND-LINE OPTIONS
 
-TEMP=$(getopt -o h:: --long help::,skip-genhtml::,skip-diff-report::,only-gcovr:: -- "$@")
+TEMP=$(getopt -o h:: --long help::skip-gcovr::,skip-genhtml::,skip-diff-report::,only-gcovr:: -- "$@")
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.

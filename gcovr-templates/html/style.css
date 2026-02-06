@@ -244,6 +244,37 @@ a:hover {
   width: var(--sidebar-width);
 }
 
+/* Sidebar Resize Handle */
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 101;
+  background: transparent;
+  transition: background var(--transition-fast);
+}
+
+.sidebar-resize-handle:hover {
+  background: var(--accent-brand);
+}
+
+.sidebar.collapsed .sidebar-resize-handle {
+  display: none;
+}
+
+body.sidebar-resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+
+body.sidebar-resizing .sidebar,
+body.sidebar-resizing .main-content {
+  transition: none;
+}
+
 /* Sidebar Header */
 .sidebar-header {
   display: flex;
@@ -278,7 +309,7 @@ a:hover {
 }
 
 .sidebar-logo .boost-wordmark {
-  height: 18px;
+  height: 32px;
   width: auto;
   flex-shrink: 0;
   transition: transform var(--transition-fast);
@@ -299,7 +330,7 @@ a:hover {
 }
 
 .sidebar-library {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
@@ -307,7 +338,7 @@ a:hover {
 }
 
 .sidebar-subtitle {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 400;
   color: var(--text-muted);
   flex-shrink: 0;
@@ -442,21 +473,6 @@ a:hover {
   width: 100%;
 }
 
-/* Position theme menu to open to the right when collapsed */
-.sidebar.collapsed .theme-menu {
-  bottom: 0;
-  left: 100%;
-  right: auto;
-  top: auto;
-  transform: translateX(8px) translateY(0);
-  margin-bottom: 0;
-  min-width: 120px;
-}
-
-.sidebar.collapsed .theme-selector.open .theme-menu {
-  transform: translateX(8px) translateY(0);
-}
-
 .sidebar.collapsed .theme-toggle {
   width: 36px;
   height: 36px;
@@ -512,16 +528,9 @@ a:hover {
   flex-shrink: 0;
 }
 
-/* Theme icons - show based on theme setting, not effective theme */
-.theme-toggle .icon-system { display: block; }
+/* Theme icons - visibility managed by JS */
 .theme-toggle .icon-sun { display: none; }
 .theme-toggle .icon-moon { display: none; }
-
-[data-theme-setting="light"] .theme-toggle .icon-system { display: none; }
-[data-theme-setting="light"] .theme-toggle .icon-sun { display: block; }
-
-[data-theme-setting="dark"] .theme-toggle .icon-system { display: none; }
-[data-theme-setting="dark"] .theme-toggle .icon-moon { display: block; }
 
 /* ===========================================
    Font Size Control
@@ -768,78 +777,6 @@ a:hover {
 }
 
 /* Theme Selector Dropdown */
-.theme-selector {
-  position: relative;
-}
-
-.theme-menu {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  margin-bottom: 8px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast);
-  z-index: 200;
-}
-
-.theme-selector.open .theme-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.theme-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.theme-option:hover {
-  background: var(--bg-hover);
-}
-
-.theme-option svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  color: var(--text-secondary);
-}
-
-.theme-option:hover svg {
-  color: var(--text-primary);
-}
-
-.theme-option span {
-  flex: 1;
-  text-align: left;
-}
-
-.theme-option .check {
-  opacity: 0;
-  color: var(--accent-brand);
-}
-
-.theme-option.active .check {
-  opacity: 1;
-}
-
 .theme-label {
   font-size: var(--font-size-xs);
   white-space: nowrap;
@@ -1079,7 +1016,7 @@ a:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   color: var(--text-primary);
 }
 
@@ -1212,7 +1149,7 @@ a:hover {
 .content-wrapper {
   flex: 1;
   padding: 24px;
-  max-width: 1400px;
+  max-width: 1600px;
   width: 100%;
   margin: 0 auto;
 }
@@ -1693,8 +1630,8 @@ a:hover {
 }
 
 .source-table td {
-  padding: 0 12px;
-  vertical-align: top;
+  padding: 4px 12px;
+  vertical-align: middle;
   border-bottom: 1px solid var(--border-muted);
 }
 
@@ -1703,14 +1640,16 @@ a:hover {
   border-right: 1px solid var(--border-color);
   text-align: right;
   user-select: none;
-  width: 60px;
+  white-space: nowrap;
+  width: 1%;
+  padding: 4px 6px;
 }
 
 .source-table .col-lineno a {
   color: var(--text-muted);
   text-decoration: none;
   display: block;
-  padding: 2px 0;
+  padding: 0;
 }
 
 .source-table .col-lineno a:hover {
@@ -1724,13 +1663,15 @@ a:hover {
   background: var(--bg-tertiary);
   border-right: 1px solid var(--border-color);
   text-align: center;
-  width: 60px;
+  width: 50px;
 }
 
 .source-table .col-count {
   text-align: right;
-  width: 60px;
+  white-space: nowrap;
+  width: 1%;
   color: var(--text-muted);
+  padding: 4px 6px;
 }
 
 .source-table .col-source {
@@ -2026,8 +1967,12 @@ a:hover {
     display: flex;
   }
 
-  /* Hide sidebar toggle (pin) button */
+  /* Hide sidebar toggle (pin) button and resize handle */
   .sidebar-toggle {
+    display: none;
+  }
+
+  .sidebar-resize-handle {
     display: none;
   }
 

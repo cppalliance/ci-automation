@@ -22,96 +22,62 @@
   // Breadcrumb Links
   // ===========================================
 
+  // Find a node in the tree by its link (HTML filename) and return
+  // the full ancestor path as an array of nodes from root to target.
+  function findPathInTree(nodes, targetLink) {
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.link === targetLink) {
+        return [node];
+      }
+      if (node.children) {
+        var childPath = findPathInTree(node.children, targetLink);
+        if (childPath) {
+          return [node].concat(childPath);
+        }
+      }
+    }
+    return null;
+  }
+
   function initBreadcrumbs() {
     var currentSpan = document.querySelector('.breadcrumb .current');
     if (!currentSpan || !window.GCOVR_TREE_DATA) return;
 
-    var pathText = currentSpan.textContent.trim();
-    var segments = pathText.split(' / ');
-    if (segments.length <= 1) return;
+    // Find current page in tree by its HTML filename — this is unambiguous
+    // since each page only appears once in the tree.
+    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    var treePath = findPathInTree(window.GCOVR_TREE_DATA, currentPage);
 
-    // Auto-detect and skip prefix segments not in tree (e.g., "boost", "json")
-    // Find the first segment that matches a root node in the tree
-    var startIndex = 0;
-    var rootNames = window.GCOVR_TREE_DATA.map(function(n) { return n.name; });
-    for (var i = 0; i < segments.length; i++) {
-      if (rootNames.indexOf(segments[i]) !== -1) {
-        startIndex = i;
-        break;
-      }
-    }
-    // Skip prefix segments
-    segments = segments.slice(startIndex);
-    if (segments.length === 0) return;
+    if (!treePath || treePath.length === 0) return;
 
-    // Create linked breadcrumb by traversing tree
-    // Uses greedy matching: tree node names may contain '/' (e.g. "capy/src/buffers")
-    // so we try matching the longest sequence of breadcrumb segments to a single node name first.
+    // Build breadcrumb from the tree path (ancestor nodes → current node)
     var fragment = document.createDocumentFragment();
-    var currentNodes = window.GCOVR_TREE_DATA;
-    var i = 0;
-    var needSep = false;
     var matchedSegments = [];
 
-    while (i < segments.length) {
-      // Greedy match: try longest possible sequence of segments against node names
-      var foundNode = null;
-      var matchLen = 0;
-      var remaining = segments.length - i;
-      for (var tryLen = remaining; tryLen >= 1; tryLen--) {
-        var candidate = segments.slice(i, i + tryLen).join('/');
-        for (var j = 0; j < currentNodes.length; j++) {
-          if (currentNodes[j].name === candidate) {
-            foundNode = currentNodes[j];
-            matchLen = tryLen;
-            break;
-          }
-        }
-        if (foundNode) break;
+    for (var i = 0; i < treePath.length; i++) {
+      var node = treePath[i];
+      var isLast = (i === treePath.length - 1);
+
+      if (i > 0) {
+        var sep = document.createElement('span');
+        sep.className = 'separator';
+        sep.textContent = '/';
+        fragment.appendChild(sep);
       }
 
-      if (foundNode && matchLen > 0) {
-        var isLast = (i + matchLen >= segments.length);
-        if (needSep) {
-          var sep = document.createElement('span');
-          sep.className = 'separator';
-          sep.textContent = '/';
-          fragment.appendChild(sep);
-        }
-        needSep = true;
-        var displayText = foundNode.name;
-        matchedSegments.push(foundNode.name);
-        if (foundNode.link && !isLast) {
-          var a = document.createElement('a');
-          a.href = foundNode.link;
-          a.textContent = displayText;
-          fragment.appendChild(a);
-        } else {
-          var span = document.createElement('span');
-          span.className = 'current-file';
-          span.textContent = displayText;
-          fragment.appendChild(span);
-        }
-        currentNodes = foundNode.children || [];
-        i += matchLen;
+      matchedSegments.push(node.name);
+
+      if (node.link && !isLast) {
+        var a = document.createElement('a');
+        a.href = node.link;
+        a.textContent = node.name;
+        fragment.appendChild(a);
       } else {
-        // Skip unmatched intermediate segments (collapsed out of tree)
-        // But always render the last segment (current file)
-        if (i === segments.length - 1) {
-          if (needSep) {
-            var sep = document.createElement('span');
-            sep.className = 'separator';
-            sep.textContent = '/';
-            fragment.appendChild(sep);
-          }
-          needSep = true;
-          var span = document.createElement('span');
-          span.className = 'current-file';
-          span.textContent = segments[i];
-          fragment.appendChild(span);
-          matchedSegments.push(segments[i]);
-        }
-        i++;
+        var span = document.createElement('span');
+        span.className = 'current-file';
+        span.textContent = node.name;
+        fragment.appendChild(span);
       }
     }
 

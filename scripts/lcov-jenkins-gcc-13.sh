@@ -17,15 +17,17 @@ while true ; do
     case "$1" in
         -h|--help)
             helpmessage="""
-usage: $scriptname [-h] [--skip-genhtml] [--skip-diff-report] [--only-gcovr]
+usage: $scriptname [-h] [--skip-gcovr] [--skip-genhtml] [--skip-diff-report] [--only-gcovr]
 
 Builds library documentation.
 
 optional arguments:
   -h, --help            Show this help message and exit
+  --skip-gcovr          Don't run gcovr
   --skip-genhtml        Don't run genhtml
   --skip-diff-report    Don't run the diff-report
-  --only-gcovr          Only run the main gcovr report, which is the same as the above skip options.
+  --only-gcovr          Only run the main gcovr report, which is the same as multiple
+                        skip options.
                         If the goal is to run gcovr, this is the preferred method
                         since this flag can be modified to skip other steps later.
 """
@@ -35,6 +37,8 @@ optional arguments:
             echo ""
             exit 0
             ;;
+        --skip-gcovr)
+            skipgcovroption="yes" ; shift 2 ;;
         --skip-genhtml)
             skipgenhtmloption="yes" ; shift 2 ;;
         --skip-diff-report)
@@ -143,27 +147,31 @@ fi
 #
 #########################
 
-GCOVRFILTER=".*/$REPONAME/.*"
-if [ -d "gcovr" ]; then
-    rm -r gcovr
+if [ ! "$skipgcovroption" = "yes" ]; then
+
+    GCOVRFILTER=".*/$REPONAME/.*"
+    if [ -d "gcovr" ]; then
+        rm -r gcovr
+    fi
+    mkdir gcovr
+    cd ../boost-root
+    if [ ! -d ci-automation ]; then
+        git clone -b master https://github.com/cppalliance/ci-automation
+    else
+        cd ci-automation
+        git pull || true
+        cd ..
+    fi
+
+    outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
+    gcovr --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
+
+    ls -al "${outputlocation}"
+
+    # Generate tree.json for sidebar navigation
+    python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
+
 fi
-mkdir gcovr
-cd ../boost-root
-if [ ! -d ci-automation ]; then
-    git clone -b master https://github.com/cppalliance/ci-automation
-else
-    cd ci-automation
-    git pull || true
-    cd ..
-fi
-
-outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
-gcovr --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
-
-ls -al "${outputlocation}"
-
-# Generate tree.json for sidebar navigation
-python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
 
 #########################################################################
 #

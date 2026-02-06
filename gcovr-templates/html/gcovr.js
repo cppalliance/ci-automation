@@ -8,6 +8,7 @@
     initTheme();
     initFontSize();
     initSidebar();
+    initSidebarResize();
     initMobileMenu();
     initFileTree();
     initBreadcrumbs();
@@ -44,50 +45,84 @@
     if (segments.length === 0) return;
 
     // Create linked breadcrumb by traversing tree
+    // Uses greedy matching: tree node names may contain '/' (e.g. "capy/src/buffers")
+    // so we try matching the longest sequence of breadcrumb segments to a single node name first.
     var fragment = document.createDocumentFragment();
     var currentNodes = window.GCOVR_TREE_DATA;
+    var i = 0;
+    var needSep = false;
+    var matchedSegments = [];
 
-    for (var i = 0; i < segments.length; i++) {
-      var segment = segments[i];
-
-      if (i > 0) {
-        var sep = document.createElement('span');
-        sep.className = 'separator';
-        sep.textContent = '/';
-        fragment.appendChild(sep);
-      }
-
-      // Find this segment in current level of tree
+    while (i < segments.length) {
+      // Greedy match: try longest possible sequence of segments against node names
       var foundNode = null;
-      for (var j = 0; j < currentNodes.length; j++) {
-        if (currentNodes[j].name === segment) {
-          foundNode = currentNodes[j];
-          break;
+      var matchLen = 0;
+      var remaining = segments.length - i;
+      for (var tryLen = remaining; tryLen >= 1; tryLen--) {
+        var candidate = segments.slice(i, i + tryLen).join('/');
+        for (var j = 0; j < currentNodes.length; j++) {
+          if (currentNodes[j].name === candidate) {
+            foundNode = currentNodes[j];
+            matchLen = tryLen;
+            break;
+          }
         }
+        if (foundNode) break;
       }
 
-      if (foundNode && foundNode.link && i < segments.length - 1) {
-        // Directory segment with link - make it clickable
-        var a = document.createElement('a');
-        a.href = foundNode.link;
-        a.textContent = segment;
-        fragment.appendChild(a);
-        // Move to children for next iteration
-        currentNodes = foundNode.children || [];
-      } else {
-        // Last segment (current file) or no link found
-        var span = document.createElement('span');
-        span.className = 'current-file';
-        span.textContent = segment;
-        fragment.appendChild(span);
-        if (foundNode && foundNode.children) {
-          currentNodes = foundNode.children;
+      if (foundNode && matchLen > 0) {
+        var isLast = (i + matchLen >= segments.length);
+        if (needSep) {
+          var sep = document.createElement('span');
+          sep.className = 'separator';
+          sep.textContent = '/';
+          fragment.appendChild(sep);
         }
+        needSep = true;
+        var displayText = foundNode.name;
+        matchedSegments.push(foundNode.name);
+        if (foundNode.link && !isLast) {
+          var a = document.createElement('a');
+          a.href = foundNode.link;
+          a.textContent = displayText;
+          fragment.appendChild(a);
+        } else {
+          var span = document.createElement('span');
+          span.className = 'current-file';
+          span.textContent = displayText;
+          fragment.appendChild(span);
+        }
+        currentNodes = foundNode.children || [];
+        i += matchLen;
+      } else {
+        // Skip unmatched intermediate segments (collapsed out of tree)
+        // But always render the last segment (current file)
+        if (i === segments.length - 1) {
+          if (needSep) {
+            var sep = document.createElement('span');
+            sep.className = 'separator';
+            sep.textContent = '/';
+            fragment.appendChild(sep);
+          }
+          needSep = true;
+          var span = document.createElement('span');
+          span.className = 'current-file';
+          span.textContent = segments[i];
+          fragment.appendChild(span);
+          matchedSegments.push(segments[i]);
+        }
+        i++;
       }
     }
 
     currentSpan.innerHTML = '';
     currentSpan.appendChild(fragment);
+
+    // Update source-filename to match breadcrumb path
+    var sourceFilename = document.querySelector('.source-filename');
+    if (sourceFilename) {
+      sourceFilename.textContent = matchedSegments.join('/');
+    }
   }
 
   // ===========================================
@@ -95,68 +130,52 @@
   // ===========================================
 
   function initTheme() {
-    const selector = document.getElementById('theme-selector');
     const toggle = document.getElementById('theme-toggle');
-    const menu = document.getElementById('theme-menu');
     const label = toggle ? toggle.querySelector('.theme-label') : null;
-    const options = menu ? menu.querySelectorAll('.theme-option') : [];
-    const savedTheme = localStorage.getItem('gcovr-theme') || 'system';
+    const iconSun = toggle ? toggle.querySelector('.icon-sun') : null;
+    const iconMoon = toggle ? toggle.querySelector('.icon-moon') : null;
 
     // Get system preference
     function getSystemTheme() {
       return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     }
 
+    // Get effective theme: saved preference or OS default
+    function getEffectiveTheme() {
+      var saved = localStorage.getItem('gcovr-theme');
+      return (saved === 'light' || saved === 'dark') ? saved : getSystemTheme();
+    }
+
     // Apply theme to document
     function applyTheme(theme) {
-      const effectiveTheme = theme === 'system' ? getSystemTheme() : theme;
-      document.documentElement.setAttribute('data-theme', effectiveTheme);
-      document.documentElement.setAttribute('data-theme-setting', theme);
+      document.documentElement.setAttribute('data-theme', theme);
       if (label) {
         label.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
       }
-      // Update active state in menu
-      options.forEach(function(opt) {
-        opt.classList.toggle('active', opt.getAttribute('data-theme') === theme);
-      });
+      if (iconSun) iconSun.style.display = (theme === 'light') ? 'block' : 'none';
+      if (iconMoon) iconMoon.style.display = (theme === 'dark') ? 'block' : 'none';
     }
 
-    // Apply saved theme
-    applyTheme(savedTheme);
+    // Apply current theme
+    applyTheme(getEffectiveTheme());
 
-    // Listen for system theme changes
+    // Listen for system theme changes — only apply if no stored preference
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function() {
-      const current = localStorage.getItem('gcovr-theme') || 'system';
-      if (current === 'system') {
-        applyTheme('system');
+      var saved = localStorage.getItem('gcovr-theme');
+      if (saved !== 'light' && saved !== 'dark') {
+        applyTheme(getSystemTheme());
       }
     });
 
-    // Toggle menu
-    if (toggle && selector) {
-      toggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        selector.classList.toggle('open');
+    // Toggle between light and dark on click
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        var current = getEffectiveTheme();
+        var next = (current === 'dark') ? 'light' : 'dark';
+        localStorage.setItem('gcovr-theme', next);
+        applyTheme(next);
       });
     }
-
-    // Handle option selection
-    options.forEach(function(option) {
-      option.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const theme = option.getAttribute('data-theme');
-        localStorage.setItem('gcovr-theme', theme);
-        applyTheme(theme);
-        selector.classList.remove('open');
-      });
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener('click', function(e) {
-      if (selector && !selector.contains(e.target)) {
-        selector.classList.remove('open');
-      }
-    });
   }
 
   // ===========================================
@@ -271,6 +290,7 @@
             if (toggle) toggle.textContent = '−';
           }
         });
+        saveExpandedFolders();
       });
     }
 
@@ -281,6 +301,7 @@
           var toggle = item.querySelector(':scope > .tree-item-header > .tree-folder-toggle');
           if (toggle) toggle.textContent = '+';
         });
+        saveExpandedFolders();
       });
     }
   }
@@ -307,7 +328,15 @@
       toggle.addEventListener('click', function() {
         sidebar.classList.toggle('collapsed');
         sidebar.classList.remove('hover-expand');
-        localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+        var isNowCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('sidebar-collapsed', isNowCollapsed);
+        // Restore custom width when un-collapsing
+        if (!isNowCollapsed) {
+          var savedWidth = localStorage.getItem('gcovr-sidebar-width');
+          if (savedWidth) {
+            document.documentElement.style.setProperty('--sidebar-width', savedWidth + 'px');
+          }
+        }
       });
     }
 
@@ -372,6 +401,67 @@
   }
 
   // ===========================================
+  // Sidebar Resize
+  // ===========================================
+
+  function initSidebarResize() {
+    var sidebar = document.getElementById('sidebar');
+    var handle = document.getElementById('sidebar-resize-handle');
+    if (!sidebar || !handle) return;
+
+    var MIN_WIDTH = 200;
+    var startX, startWidth;
+
+    // Restore saved width
+    var savedWidth = localStorage.getItem('gcovr-sidebar-width');
+    if (savedWidth && !sidebar.classList.contains('collapsed')) {
+      var w = parseInt(savedWidth, 10);
+      if (w >= MIN_WIDTH) {
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+      }
+    }
+
+    function getMaxWidth() {
+      return Math.floor(window.innerWidth * 0.5);
+    }
+
+    function onMouseMove(e) {
+      var newWidth = startWidth + (e.clientX - startX);
+      var maxW = getMaxWidth();
+      if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
+      if (newWidth > maxW) newWidth = maxW;
+      document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+    }
+
+    function onMouseUp() {
+      document.body.classList.remove('sidebar-resizing');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      // Save the current width
+      var computed = parseInt(getComputedStyle(sidebar).width, 10);
+      localStorage.setItem('gcovr-sidebar-width', computed);
+    }
+
+    handle.addEventListener('mousedown', function(e) {
+      if (sidebar.classList.contains('collapsed')) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+      document.body.classList.add('sidebar-resizing');
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    // Double-click to reset to default width
+    var DEFAULT_WIDTH = 320;
+    handle.addEventListener('dblclick', function() {
+      if (sidebar.classList.contains('collapsed')) return;
+      document.documentElement.style.setProperty('--sidebar-width', DEFAULT_WIDTH + 'px');
+      localStorage.setItem('gcovr-sidebar-width', DEFAULT_WIDTH);
+    });
+  }
+
+  // ===========================================
   // Mobile Menu
   // ===========================================
 
@@ -419,6 +509,10 @@
 
     // Check for embedded tree data first (works for local file:// access)
     if (window.GCOVR_TREE_DATA) {
+      window.GCOVR_TREE_DATA = normalizeTree(window.GCOVR_TREE_DATA);
+      deduplicateTree(window.GCOVR_TREE_DATA);
+      collapseSingleChildDirs(window.GCOVR_TREE_DATA);
+      deduplicateTree(window.GCOVR_TREE_DATA);
       renderTree(treeContainer, window.GCOVR_TREE_DATA);
       return;
     }
@@ -430,12 +524,136 @@
         return response.json();
       })
       .then(function(tree) {
-        renderTree(treeContainer, tree);
+        window.GCOVR_TREE_DATA = normalizeTree(tree);
+        deduplicateTree(window.GCOVR_TREE_DATA);
+        collapseSingleChildDirs(window.GCOVR_TREE_DATA);
+        deduplicateTree(window.GCOVR_TREE_DATA);
+        renderTree(treeContainer, window.GCOVR_TREE_DATA);
       })
       .catch(function(err) {
         console.log('tree.json not found, using static sidebar');
         // Keep existing static content from Jinja template
       });
+  }
+
+  // Collapse single-child directory chains: if a directory has exactly
+  // one child and that child is also a directory, absorb the grandchildren.
+  // e.g. include > boost > capy > [items] becomes include > [items]
+  function collapseSingleChildDirs(nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!node.isDirectory || !node.children) continue;
+      while (node.children.length === 1 && node.children[0].isDirectory &&
+             node.children[0].children && node.children[0].children.length > 0) {
+        var child = node.children[0];
+        if (!node.link && child.link) node.link = child.link;
+        node.children = child.children;
+      }
+      collapseSingleChildDirs(node.children);
+    }
+  }
+
+  // Deduplicate tree: when a node has a child with the same name
+  // (e.g. include > include), merge the child's children upward.
+  // This happens when gcovr directory pages list entries with paths
+  // that include the parent directory name.
+  function deduplicateTree(nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!node.children || node.children.length === 0) continue;
+      for (var j = node.children.length - 1; j >= 0; j--) {
+        var child = node.children[j];
+        if (child.name === node.name && child.isDirectory) {
+          node.children.splice(j, 1);
+          if (!node.link && child.link) node.link = child.link;
+          if (!node.coverage && child.coverage) node.coverage = child.coverage;
+          if (!node.coverageClass && child.coverageClass) node.coverageClass = child.coverageClass;
+          if (child.children) {
+            for (var k = 0; k < child.children.length; k++) {
+              node.children.push(child.children[k]);
+            }
+          }
+        }
+      }
+      deduplicateTree(node.children);
+    }
+  }
+
+  // Normalize tree: expand multi-segment node names (e.g. "capy/buffers")
+  // into proper nested directory structures so the tree and breadcrumbs
+  // display correctly.
+  function normalizeTree(nodes) {
+    if (!nodes || nodes.length === 0) return nodes;
+
+    var groups = {};
+    var order = [];
+
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var slashIdx = node.name.indexOf('/');
+
+      if (slashIdx === -1) {
+        // Simple name — add directly or merge with existing group
+        if (groups[node.name]) {
+          var existing = groups[node.name];
+          if (node.link) existing.link = node.link;
+          if (node.coverage) existing.coverage = node.coverage;
+          if (node.coverageClass) existing.coverageClass = node.coverageClass;
+          if (node.children && node.children.length > 0) {
+            existing.children = (existing.children || []).concat(node.children);
+          }
+        } else {
+          var copy = {};
+          for (var key in node) {
+            if (node.hasOwnProperty(key)) copy[key] = node[key];
+          }
+          groups[node.name] = copy;
+          order.push(node.name);
+        }
+      } else {
+        // Multi-segment name — split on first '/' and group
+        var prefix = node.name.substring(0, slashIdx);
+        var rest = node.name.substring(slashIdx + 1);
+
+        if (!groups[prefix]) {
+          groups[prefix] = {
+            name: prefix,
+            isDirectory: true,
+            children: []
+          };
+          order.push(prefix);
+        }
+        if (!groups[prefix].children) groups[prefix].children = [];
+
+        // Create child node with remaining path as name
+        var childNode = {};
+        for (var key in node) {
+          if (node.hasOwnProperty(key)) childNode[key] = node[key];
+        }
+        childNode.name = rest;
+        groups[prefix].children.push(childNode);
+      }
+    }
+
+    // Build result with recursive normalization
+    var result = [];
+    for (var i = 0; i < order.length; i++) {
+      var node = groups[order[i]];
+      if (node.children && node.children.length > 0) {
+        node.children = normalizeTree(node.children);
+      }
+      result.push(node);
+    }
+    return result;
+  }
+
+  // Save expanded folder paths to localStorage
+  function saveExpandedFolders() {
+    var paths = [];
+    document.querySelectorAll('.tree-item.expanded[data-tree-path]').forEach(function(el) {
+      paths.push(el.getAttribute('data-tree-path'));
+    });
+    localStorage.setItem('gcovr-expanded-folders', JSON.stringify(paths));
   }
 
   function renderTree(container, tree) {
@@ -447,7 +665,7 @@
     }
 
     tree.forEach(function(item) {
-      container.appendChild(createTreeItem(item));
+      container.appendChild(createTreeItem(item, ''));
     });
 
     // Auto-expand to current file and highlight it
@@ -460,29 +678,48 @@
 
     // Find the link matching current page
     var currentLink = container.querySelector('a[href="' + currentPage + '"]');
-    if (!currentLink) return;
 
-    // Mark as active
-    var treeItem = currentLink.closest('.tree-item');
-    if (treeItem) {
-      treeItem.classList.add('active');
-    }
-
-    // Expand all parent folders
-    var parent = currentLink.closest('.tree-children');
-    while (parent) {
-      var parentItem = parent.closest('.tree-item');
-      if (parentItem) {
-        parentItem.classList.add('expanded');
-        var toggle = parentItem.querySelector(':scope > .tree-item-header > .tree-folder-toggle');
-        if (toggle) toggle.textContent = '−';
-      }
-      parent = parentItem ? parentItem.parentElement.closest('.tree-children') : null;
-    }
-
-    // Scroll into view
     if (currentLink) {
-      currentLink.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // Mark as active
+      var treeItem = currentLink.closest('.tree-item');
+      if (treeItem) {
+        treeItem.classList.add('active');
+      }
+
+      // Expand all parent folders
+      var parent = currentLink.closest('.tree-children');
+      while (parent) {
+        var parentItem = parent.closest('.tree-item');
+        if (parentItem) {
+          parentItem.classList.add('expanded');
+          var toggle = parentItem.querySelector(':scope > .tree-item-header > .tree-folder-toggle');
+          if (toggle) toggle.textContent = '−';
+        }
+        parent = parentItem ? parentItem.parentElement.closest('.tree-children') : null;
+      }
+    }
+
+    // Restore previously expanded folders from localStorage
+    try {
+      var saved = localStorage.getItem('gcovr-expanded-folders');
+      if (saved) {
+        var paths = JSON.parse(saved);
+        paths.forEach(function(path) {
+          var el = container.querySelector('.tree-item[data-tree-path="' + CSS.escape(path) + '"]');
+          if (el && !el.classList.contains('no-children')) {
+            el.classList.add('expanded');
+            var toggle = el.querySelector(':scope > .tree-item-header > .tree-folder-toggle');
+            if (toggle) toggle.textContent = '−';
+          }
+        });
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+
+    // Scroll active item into view instantly
+    if (currentLink) {
+      currentLink.scrollIntoView({ block: 'center', behavior: 'instant' });
     }
   }
 
@@ -507,12 +744,15 @@
     return lastSlash >= 0 ? cleaned.substring(lastSlash + 1) : cleaned;
   }
 
-  function createTreeItem(item) {
+  function createTreeItem(item, parentPath) {
     var hasChildren = item.children && item.children.length > 0;
     var isDirectory = item.isDirectory || hasChildren;
+    var cleanedName = cleanPathName(item.name);
+    var treePath = parentPath ? (parentPath + '/' + cleanedName) : cleanedName;
 
     var div = document.createElement('div');
     div.className = 'tree-item' + (isDirectory ? ' is-folder' : '') + (hasChildren ? '' : ' no-children');
+    div.setAttribute('data-tree-path', treePath);
 
     var header = document.createElement('div');
     header.className = 'tree-item-header';
@@ -529,6 +769,7 @@
         e.preventDefault();
         var isExpanded = div.classList.toggle('expanded');
         toggle.textContent = isExpanded ? '−' : '+';
+        saveExpandedFolders();
       });
       header.appendChild(toggle);
 
@@ -540,6 +781,7 @@
         e.preventDefault();
         var isExpanded = div.classList.toggle('expanded');
         toggle.textContent = isExpanded ? '−' : '+';
+        saveExpandedFolders();
       });
     } else {
       var spacer = document.createElement('span');
@@ -590,7 +832,7 @@
       var childrenInner = document.createElement('div');
       childrenInner.className = 'tree-children-inner';
       item.children.forEach(function(child) {
-        childrenInner.appendChild(createTreeItem(child));
+        childrenInner.appendChild(createTreeItem(child, treePath));
       });
 
       childrenWrapper.appendChild(childrenInner);

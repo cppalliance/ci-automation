@@ -237,6 +237,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   z-index: 100;
+  overflow: visible;
   transition: width var(--transition-normal);
 }
 
@@ -256,7 +257,7 @@ a:hover {
   position: absolute;
   top: 0;
   left: 100%;
-  width: 16px;
+  width: 29px;
   height: 100%;
   cursor: col-resize;
   z-index: 101;
@@ -267,17 +268,16 @@ a:hover {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 3px;
+  width: 5px;
   height: 100%;
-  border-radius: 1.5px;
-  background: transparent;
+  border-radius: 2.5px;
+  background: var(--bg-tertiary);
   transform: translateX(-50%);
   transition: background var(--transition-fast);
 }
 
 .sidebar-resize-handle:hover::after {
-  background: var(--accent-brand);
-  opacity: 0.5;
+  background: var(--border-color);
 }
 
 .sidebar.collapsed .sidebar-resize-handle {
@@ -814,7 +814,7 @@ body.sidebar-resizing .main-content {
 
 .main-content {
   flex: 1;
-  margin-left: calc(var(--sidebar-width) + 32px);
+  margin-left: calc(var(--sidebar-width) + 41px);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -822,7 +822,7 @@ body.sidebar-resizing .main-content {
 }
 
 .sidebar.collapsed ~ .main-content {
-  margin-left: calc(var(--sidebar-collapsed-width) + 32px);
+  margin-left: calc(var(--sidebar-collapsed-width) + 41px);
 }
 
 .main-header {

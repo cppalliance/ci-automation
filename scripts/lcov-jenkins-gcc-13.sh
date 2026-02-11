@@ -173,6 +173,9 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     # Generate tree.json for sidebar navigation
     python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
 
+    # Generate coverage badges
+    python3 "ci-automation/scripts/generate_badges.py" "$outputlocation"
+
 fi
 
 #########################################################################

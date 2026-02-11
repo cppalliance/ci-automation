@@ -266,47 +266,30 @@ def parse_coverage_from_html(html_path):
             'branches': None
         }
 
-        # Find the summary-cards section
-        summary_match = re.search(
-            r'<div class="summary-cards">(.*?)</div>\s*</div>\s*</div>\s*</div>',
-            content,
+        # Find each summary-card and extract type + percentage directly
+        # from the full HTML content (avoids fragile summary-section extraction).
+        card_pattern = re.compile(
+            r'<div class="summary-card">\s*'
+            r'<div class="summary-card-header">\s*<h3>(\w+)</h3>\s*</div>\s*'
+            r'<div class="summary-card-body">.*?'
+            r'<(?:span|div) class="ring-text">([^<]+)</(?:span|div)>',
             re.DOTALL
         )
 
-        if not summary_match:
-            # Try alternative: find all summary-card blocks
-            summary_match = re.search(
-                r'<div class="summary-cards">(.*?)<div class="legend">',
-                content,
-                re.DOTALL
-            )
+        for match in card_pattern.finditer(content):
+            stat_type = match.group(1).lower()
+            percentage_text = match.group(2).strip()
 
-        if summary_match:
-            summary_html = summary_match.group(1)
-
-            # Find each summary-card and extract type + percentage
-            card_pattern = re.compile(
-                r'<div class="summary-card">\s*'
-                r'<div class="summary-card-header">\s*<h3>(\w+)</h3>\s*</div>\s*'
-                r'<div class="summary-card-body">.*?'
-                r'<span class="ring-text">([^<]+)</span>',
-                re.DOTALL
-            )
-
-            for match in card_pattern.finditer(summary_html):
-                stat_type = match.group(1).lower()
-                percentage_text = match.group(2).strip()
-
-                # Extract numeric percentage (skip "-%" which means no data)
-                pct_match = re.search(r'([\d.]+)\s*%', percentage_text)
-                if pct_match:
-                    percentage = float(pct_match.group(1))
-                    if stat_type == 'lines':
-                        coverage_data['lines'] = percentage
-                    elif stat_type == 'functions':
-                        coverage_data['functions'] = percentage
-                    elif stat_type == 'branches':
-                        coverage_data['branches'] = percentage
+            # Extract numeric percentage (skip "-%" which means no data)
+            pct_match = re.search(r'([\d.]+)\s*%', percentage_text)
+            if pct_match:
+                percentage = float(pct_match.group(1))
+                if stat_type == 'lines':
+                    coverage_data['lines'] = percentage
+                elif stat_type == 'functions':
+                    coverage_data['functions'] = percentage
+                elif stat_type == 'branches':
+                    coverage_data['branches'] = percentage
 
         return coverage_data
     except Exception as e:
@@ -320,29 +303,27 @@ def parse_coverage_from_json(json_path):
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        # gcovr JSON summary format
-        root = data.get('root', data)
-
+        # gcovr JSON summary format - keys are at top level
         coverage_data = {
             'lines': None,
             'functions': None,
             'branches': None
         }
 
-        if 'line_percent' in root:
-            coverage_data['lines'] = root['line_percent']
-        elif 'lines_percent' in root:
-            coverage_data['lines'] = root['lines_percent']
+        if 'line_percent' in data:
+            coverage_data['lines'] = data['line_percent']
+        elif 'lines_percent' in data:
+            coverage_data['lines'] = data['lines_percent']
 
-        if 'function_percent' in root:
-            coverage_data['functions'] = root['function_percent']
-        elif 'functions_percent' in root:
-            coverage_data['functions'] = root['functions_percent']
+        if 'function_percent' in data:
+            coverage_data['functions'] = data['function_percent']
+        elif 'functions_percent' in data:
+            coverage_data['functions'] = data['functions_percent']
 
-        if 'branch_percent' in root:
-            coverage_data['branches'] = root['branch_percent']
-        elif 'branches_percent' in root:
-            coverage_data['branches'] = root['branches_percent']
+        if 'branch_percent' in data:
+            coverage_data['branches'] = data['branch_percent']
+        elif 'branches_percent' in data:
+            coverage_data['branches'] = data['branches_percent']
 
         return coverage_data
     except Exception as e:

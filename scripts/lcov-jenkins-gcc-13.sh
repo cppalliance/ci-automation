@@ -166,7 +166,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     fi
 
     outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
-    gcovr --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html"
+    gcovr --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "$outputlocation/summary.json"
 
     ls -al "${outputlocation}"
 
@@ -174,7 +174,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
 
     # Generate coverage badges
-    python3 "ci-automation/scripts/generate_badges.py" "$outputlocation"
+    python3 "ci-automation/scripts/generate_badges.py" "$outputlocation" --json "$outputlocation/summary.json"
 
 fi
 

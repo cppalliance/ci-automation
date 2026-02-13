@@ -156,6 +156,10 @@ if [ ! "$skipgcovroption" = "yes" ]; then
         rm -r gcovr
     fi
     mkdir gcovr
+    if [ -d "gcovr-flat" ]; then
+        rm -r gcovr-flat
+    fi
+    mkdir gcovr-flat
     cd ../boost-root
     if [ ! -d ci-automation ]; then
         git clone -b master https://github.com/cppalliance/ci-automation
@@ -166,9 +170,10 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     fi
 
     outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
+    outputlocation_flat="$BOOST_CI_SRC_FOLDER/gcovr-flat"
 
     # First pass, output json
-    gcovr --merge-mode-functions separate --sort uncovered-percent --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*'  --exclude '.*/examples/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "$outputlocation/summary.json" --json "$outputlocation/coverage-raw.json"
+    gcovr --merge-mode-functions separate --sort uncovered-percent --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*'  --exclude '.*/examples/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "${outputlocation}/summary.json" --json "${outputlocation}/coverage-raw.json"
 
     # Fix paths
     python3 "ci-automation/scripts/fix_paths.py" \
@@ -183,10 +188,16 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     # Second pass, generate html
     gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "$outputlocation/summary.json"
 
+    # Second pass, generate html flat
+    gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
+
     ls -al "${outputlocation}"
 
     # Generate tree.json for sidebar navigation
-    python3 "ci-automation/scripts/gcovr_build_tree.py" "$outputlocation"
+    python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation}"
+
+    # Generate tree.json for sidebar navigation - flat
+    python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation_flat}"
 
     # Generate coverage badges
     python3 "ci-automation/scripts/generate_badges.py" "$outputlocation" --json "$outputlocation/summary.json"

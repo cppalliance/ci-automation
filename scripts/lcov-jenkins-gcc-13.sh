@@ -189,7 +189,10 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "$outputlocation/summary.json"
 
     # Second pass, generate html flat
-    gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
+    # gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
+
+    # again, temporarily try without templates
+    gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
 
     ls -al "${outputlocation}"
 
@@ -197,7 +200,8 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation}"
 
     # Generate tree.json for sidebar navigation - flat
-    python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation_flat}"
+    # temporarily testing 
+    # python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation_flat}"
 
     # Generate coverage badges
     python3 "ci-automation/scripts/generate_badges.py" "$outputlocation" --json "$outputlocation/summary.json"

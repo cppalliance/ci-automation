@@ -189,7 +189,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     outputlocation_flat="$BOOST_CI_SRC_FOLDER/gcovr-flat"
 
     # First pass, output json
-    gcovr --merge-mode-functions separate --sort uncovered-percent --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*'  --exclude '.*/examples/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "${outputlocation}/summary.json" --json "${outputlocation}/coverage-raw.json"
+    gcovr "${GCOVR_EXTRA_OPTIONS[@]}" --merge-mode-functions separate --sort uncovered-percent --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*'  --exclude '.*/examples/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "${outputlocation}/summary.json" --json "${outputlocation}/coverage-raw.json"
 
     # Fix paths
     python3 "ci-automation/scripts/fix_paths.py" \
@@ -202,7 +202,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     ln -sfn "$BOOST_CI_SRC_FOLDER/src" "$(pwd)/src" 2>/dev/null || true
 
     # Second pass, generate html
-    gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "$outputlocation/summary.json"
+    gcovr "${GCOVR_EXTRA_OPTIONS[@]}" -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-nested --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "$outputlocation/summary.json"
 
     # Second pass, generate html flat
     # gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"

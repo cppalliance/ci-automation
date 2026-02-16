@@ -140,7 +140,7 @@ collect_coverage
 
 # Now the tracefile is coverage_filtered.info
 if [ ! "$skipgenhtmloption" = "yes" ]; then
-    genhtml -o genhtml coverage_remapped.info
+    genhtml --show-navigation -o genhtml coverage_remapped.info
 fi
 
 #########################

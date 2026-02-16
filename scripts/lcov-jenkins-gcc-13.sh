@@ -75,9 +75,9 @@ elif [ "${BOOST_BRANCH_COVERAGE}" = "1" ]; then
     export GCOVR_BRANCH_COVERAGE=1
 fi
 
-GCOVR_EXTRA_OPTIONS=""
+GCOVR_EXTRA_OPTIONS=()
 if [ "${GCOVR_BRANCH_COVERAGE}" = "0" ]; then
-    GCOVR_EXTRA_OPTIONS="--exclude-branches-by-pattern='.*'"
+    GCOVR_EXTRA_OPTIONS=(--exclude-branches-by-pattern='.*')
 fi
 
 # export USER=$(whoami)
@@ -208,7 +208,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     # gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
 
     # again, temporarily try without templates
-    gcovr "${GCOVR_EXTRA_OPTIONS}" -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
+    gcovr "${GCOVR_EXTRA_OPTIONS[@]}" -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
 
     ls -al "${outputlocation}"
 

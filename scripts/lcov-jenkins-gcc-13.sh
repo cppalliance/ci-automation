@@ -64,9 +64,6 @@ if [ -z "${ORGANIZATION}" ]; then
         exit 1
 fi
 
-# temporary default for testing:
-export BOOST_BRANCH_COVERAGE="0"
-
 if [ "${BOOST_BRANCH_COVERAGE}" = "0" ]; then
     export LCOV_BRANCH_COVERAGE=0
     export GCOVR_BRANCH_COVERAGE=0

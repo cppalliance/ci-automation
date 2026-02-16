@@ -9,9 +9,11 @@
       <span class="stat {{functions.class}}">
         <strong>{{functions.coverage}}%</strong> Functions ({{functions.exec}}/{{functions.total}})
       </span>
+      {% if info.branches.total > info.branches.excluded %}
       <span class="stat {{branches.class}}">
-        <strong>{{branches.coverage}}%</strong> Branches ({{branches.exec}}/{{branches.total}})
+        <strong>{{branches.coverage}}%</strong> Branches ({{branches.exec}}/{{branches.total - branches.excluded}})
       </span>
+      {% endif %}
     </div>
   </div>
 

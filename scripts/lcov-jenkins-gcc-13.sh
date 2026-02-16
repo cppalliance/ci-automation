@@ -72,6 +72,10 @@ elif [ "${BOOST_BRANCH_COVERAGE}" = "1" ]; then
     export GCOVR_BRANCH_COVERAGE=1
 fi
 
+# Default of GCOVR_BRANCH_COVERAGE is 0 -> no branch coverage report
+# That may be overwritten by BOOST_BRANCH_COVERAGE, above.
+: "${GCOVR_BRANCH_COVERAGE:=0}"
+
 GCOVR_EXTRA_OPTIONS=()
 if [ "${GCOVR_BRANCH_COVERAGE}" = "0" ]; then
     GCOVR_EXTRA_OPTIONS=(--exclude-branches-by-pattern='.*')

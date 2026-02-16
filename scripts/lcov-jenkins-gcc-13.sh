@@ -64,6 +64,22 @@ if [ -z "${ORGANIZATION}" ]; then
         exit 1
 fi
 
+# temporary default for testing:
+export BOOST_BRANCH_COVERAGE="0"
+
+if [ "${BOOST_BRANCH_COVERAGE}" = "0" ]; then
+    export LCOV_BRANCH_COVERAGE=0
+    export GCOVR_BRANCH_COVERAGE=0
+elif [ "${BOOST_BRANCH_COVERAGE}" = "1" ]; then
+    export LCOV_BRANCH_COVERAGE=1
+    export GCOVR_BRANCH_COVERAGE=1
+fi
+
+GCOVR_EXTRA_OPTIONS=""
+if [ "${GCOVR_BRANCH_COVERAGE}" = "0" ]; then
+    GCOVR_EXTRA_OPTIONS="--exclude-branches-by-pattern='.*'"
+fi
+
 # export USER=$(whoami)
 # echo "USER is ${USER}"
 
@@ -192,7 +208,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     # gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-template-dir=ci-automation/gcovr-templates/html --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
 
     # again, temporarily try without templates
-    gcovr -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
+    gcovr "${GCOVR_EXTRA_OPTIONS}" -a "$outputlocation/coverage-fixed.json" --merge-mode-functions separate --sort uncovered-percent --html-details --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*' --exclude '.*/examples/.*' --html --output "${outputlocation_flat}/index.html" --json-summary-pretty --json-summary "${outputlocation_flat}/summary.json"
 
     ls -al "${outputlocation}"
 

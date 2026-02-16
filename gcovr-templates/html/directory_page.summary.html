@@ -50,6 +50,7 @@
     </div>
   </div>
 
+  {% if info.branches.total > info.branches.excluded %}
   <div class="summary-card">
     <div class="summary-card-header">
       <h3>Branches</h3>
@@ -69,11 +70,12 @@
         </div>
         <div class="stat-row">
           <span class="stat-label">Total</span>
-          <span class="stat-value">{{info.branches.total}}</span>
+          <span class="stat-value">{{info.branches.total - info.branches.excluded}}</span>
         </div>
       </div>
     </div>
   </div>
+  {% endif %}
 </div>
 
 <div class="coverage-legend">

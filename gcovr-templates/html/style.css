@@ -775,6 +775,10 @@ body.sidebar-resizing .main-content {
   color: var(--text-primary);
 }
 
+.tree-label a {
+  color: var(--text-primary);
+}
+
 .tree-coverage {
   font-size: var(--font-size-xs);
   font-weight: 600;
@@ -1170,6 +1174,7 @@ body.sidebar-resizing .main-content {
 }
 
 .col-name a {
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1856,7 +1861,7 @@ body.sidebar-resizing .main-content {
    =========================================== */
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
   height: 8px;
 }
 

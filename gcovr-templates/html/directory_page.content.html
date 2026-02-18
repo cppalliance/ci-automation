@@ -36,8 +36,15 @@
          data-filename="{{row.filename}}"
          data-coverage="{{row.lines.sort}}"
          data-lines="{{row.lines.total}}"
+         data-lines-exec="{{row.lines.exec}}"
+         data-lines-coverage="{{row.lines.coverage}}"
+         data-lines-class="{{row.lines.class}}"
          data-functions="{{row.functions.sort}}"
-         data-branches="{{row.branches.sort}}">
+         data-functions-coverage="{{row.functions.coverage}}"
+         data-functions-class="{{row.functions.class}}"
+         data-branches="{{row.branches.sort}}"
+         data-branches-coverage="{{row.branches.coverage}}"
+         data-branches-class="{{row.branches.class}}">
       <div class="col-name">
         <span class="file-icon">
           {% if row.link is none %}

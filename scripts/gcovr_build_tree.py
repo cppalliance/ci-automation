@@ -98,6 +98,18 @@ def get_coverage_class(coverage):
         return 'coverage-unknown'
 
 
+def clean_name(raw_name):
+    """Extract the leaf name from a possibly relative path."""
+    if not raw_name:
+        return raw_name
+    cleaned = raw_name
+    while cleaned.startswith('../') or cleaned.startswith('./'):
+        cleaned = cleaned[3:] if cleaned.startswith('../') else cleaned[2:]
+    if '/' in cleaned:
+        cleaned = cleaned.rsplit('/', 1)[-1]
+    return cleaned or raw_name
+
+
 def build_tree(output_dir):
     """Build complete tree structure by following links recursively."""
     output_path = Path(output_dir)
@@ -123,7 +135,7 @@ def build_tree(output_dir):
         nodes = []
 
         for entry in entries:
-            name = entry['name']
+            name = clean_name(entry['name'])
             is_dir = entry['is_dir'] or '.' not in name
             coverage = entry['coverage']
             link = entry['link']
@@ -163,13 +175,18 @@ def inject_tree_data(output_dir, tree):
             with open(html_file, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            # Check if already injected (look for the actual data, not just the var name)
-            if 'window.GCOVR_TREE_DATA=[' in content or 'window.GCOVR_TREE_DATA={' in content:
-                continue
+            original = content
 
-            # Inject before </body>
-            if '</body>' in content:
+            # Replace existing tree data if present
+            if 'window.GCOVR_TREE_DATA=' in content:
+                content = re.sub(
+                    r'<script>window\.GCOVR_TREE_DATA=.*?;</script>',
+                    tree_script, content)
+            elif '</body>' in content:
+                # Inject before </body> if not present
                 content = content.replace('</body>', f'{tree_script}\n</body>')
+
+            if content != original:
                 with open(html_file, 'w', encoding='utf-8') as f:
                     f.write(content)
                 count += 1

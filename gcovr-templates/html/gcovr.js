@@ -17,6 +17,7 @@
     initTreeControls();
     initViewToggle();
     initTlaNavigation();
+    initColumnToggles();
     initPopupResize();
 
     // Reveal page now that all init is done
@@ -1385,6 +1386,58 @@
       });
       cell.appendChild(a);
     }
+  }
+
+  // ===========================================
+  // Column Visibility Toggles
+  // ===========================================
+
+  function initColumnToggles() {
+    var buttons = document.querySelectorAll('.col-toggle');
+    if (buttons.length === 0) return;
+
+    var table = document.querySelector('.source-table');
+    if (!table) return;
+
+    // Restore saved state
+    var hidden = [];
+    try {
+      var saved = localStorage.getItem('gcovr-hidden-columns');
+      if (saved) hidden = JSON.parse(saved);
+    } catch (e) {}
+
+    // Apply saved hidden columns
+    for (var i = 0; i < hidden.length; i++) {
+      table.classList.add('hide-col-' + hidden[i]);
+    }
+
+    // Update button appearance to match state
+    buttons.forEach(function(btn) {
+      var col = btn.getAttribute('data-col');
+      if (hidden.indexOf(col) >= 0) {
+        btn.classList.remove('show-col');
+      }
+    });
+
+    // Handle clicks
+    buttons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var col = this.getAttribute('data-col');
+        var hideClass = 'hide-col-' + col;
+        var isHidden = table.classList.toggle(hideClass);
+        this.classList.toggle('show-col', !isHidden);
+
+        // Save state
+        var current = [];
+        var allBtns = document.querySelectorAll('.col-toggle');
+        allBtns.forEach(function(b) {
+          if (!b.classList.contains('show-col')) {
+            current.push(b.getAttribute('data-col'));
+          }
+        });
+        localStorage.setItem('gcovr-hidden-columns', JSON.stringify(current));
+      });
+    });
   }
 
   // ===========================================

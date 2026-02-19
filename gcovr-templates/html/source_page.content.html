@@ -24,6 +24,13 @@
       </button>
       {% endif %}
     </div>
+    <div class="source-column-filters">
+      {% if has_branches %}
+      <button type="button" class="btn btn-sm col-toggle show-col" data-col="branch" title="Toggle Branch column">Branch</button>
+      {% endif %}
+      <button type="button" class="btn btn-sm col-toggle show-col" data-col="tla" title="Toggle TLA column">TLA</button>
+      <button type="button" class="btn btn-sm col-toggle show-col" data-col="count" title="Toggle Hits column">Hits</button>
+    </div>
     {% if info.navigation is defined and fname in info.navigation %}
     <div class="source-nav-links">
       <a class="nav-link nav-prev" href="{% if info.single_page %}#{% endif %}{{info.navigation[fname][0] or ROOT_FNAME}}" title="Previous file">

@@ -59,6 +59,7 @@
           {% if SHOW_CALLS %}
           <th class="col-call">Call</th>
           {% endif %}
+          <th class="col-tla">TLA</th>
           <th class="col-count">Hits</th>
           <th class="col-source">Source Code</th>
         </tr>
@@ -183,6 +184,7 @@
             {% endif %}
           </td>
           {% endif %}
+          <td class="col-tla"></td>
           <td class="col-count{% if row.covclass %} {{row.covclass}}{% endif %}">
             {% if row.covclass == 'uncoveredLine' %}<span class="hit-miss">&cross;</span>{% elif row.covclass == 'excludedLine' %}<span class="hit-excluded">&minus;</span>{% else %}{{row.linecount}}{% endif %}
           </td>

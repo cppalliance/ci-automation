@@ -15,6 +15,7 @@
         var theme = (saved === 'light' || saved === 'dark') ? saved
           : window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.backgroundColor = theme === 'light' ? '#ffffff' : '#0d1117';
 
         // Apply flat mode immediately to prevent sidebar flash
         if (localStorage.getItem('gcovr-view-mode') === 'flat') {

@@ -40,7 +40,15 @@ class FileListParser(HTMLParser):
                     'name': attrs_dict.get('data-filename', ''),
                     'coverage': attrs_dict.get('data-coverage', '0'),
                     'is_dir': 'directory' in classes,
-                    'link': None
+                    'link': None,
+                    'linesTotal': attrs_dict.get('data-lines', ''),
+                    'linesExec': attrs_dict.get('data-lines-exec', ''),
+                    'linesCoverage': attrs_dict.get('data-lines-coverage', ''),
+                    'linesClass': attrs_dict.get('data-lines-class', ''),
+                    'functionsCoverage': attrs_dict.get('data-functions-coverage', ''),
+                    'functionsClass': attrs_dict.get('data-functions-class', ''),
+                    'branchesCoverage': attrs_dict.get('data-branches-coverage', ''),
+                    'branchesClass': attrs_dict.get('data-branches-class', ''),
                 }
 
         # Capture links in file rows
@@ -144,6 +152,14 @@ def build_tree(output_dir):
                 'name': name,
                 'coverage': coverage,
                 'coverageClass': get_coverage_class(coverage),
+                'linesTotal': entry.get('linesTotal', ''),
+                'linesExec': entry.get('linesExec', ''),
+                'linesCoverage': entry.get('linesCoverage', ''),
+                'linesClass': entry.get('linesClass', ''),
+                'functionsCoverage': entry.get('functionsCoverage', ''),
+                'functionsClass': entry.get('functionsClass', ''),
+                'branchesCoverage': entry.get('branchesCoverage', ''),
+                'branchesClass': entry.get('branchesClass', ''),
                 'isDirectory': is_dir,
                 'link': link,
                 'children': []

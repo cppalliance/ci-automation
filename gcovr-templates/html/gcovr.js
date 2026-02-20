@@ -1403,7 +1403,11 @@
     var hidden = [];
     try {
       var saved = localStorage.getItem('gcovr-hidden-columns');
-      if (saved) hidden = JSON.parse(saved);
+      if (saved) {
+        hidden = JSON.parse(saved);
+      } else {
+        hidden = ['tla'];
+      }
     } catch (e) {}
 
     // Apply saved hidden columns

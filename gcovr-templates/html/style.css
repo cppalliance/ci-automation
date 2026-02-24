@@ -4,6 +4,32 @@
 
 @charset "utf-8";
 
+/* Monaspace Neon - Regular */
+@font-face {
+  font-family: "Monaspace Neon";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("MonaspaceNeon-Var.woff2") format("woff2");
+  size-adjust: 100%;
+  ascent-override: 92%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+/* Monaspace Xenon - Italic */
+@font-face {
+  font-family: "Monaspace Xenon";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("MonaspaceXenon-Var.woff2") format("woff2");
+  size-adjust: 100%;
+  ascent-override: 92%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
 :root {
   /* ===========================================
      Brand Colors (from Boost website mockup)
@@ -80,7 +106,7 @@
      Typography
      =========================================== */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --font-mono: 'SF Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-mono: 'Monaspace Neon', 'Monaspace Xenon', 'SF Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, monospace;
 
   /* Font sizes - base scale (can be adjusted via JS) */
   --font-size-base: 16px;
@@ -1950,13 +1976,13 @@ body.sidebar-resizing .main-content {
    =========================================== */
 
 /* Dark theme syntax highlighting */
-.c { color: #8b949e; font-style: italic; } /* Comment */
+.c { color: #8b949e; font-style: italic; font-family: 'Monaspace Xenon', var(--font-mono); } /* Comment */
 .k { color: #ff7b72; font-weight: bold; } /* Keyword */
 .o { color: #79c0ff; } /* Operator */
-.cm { color: #8b949e; font-style: italic; } /* Comment.Multiline */
+.cm { color: #8b949e; font-style: italic; font-family: 'Monaspace Xenon', var(--font-mono); } /* Comment.Multiline */
 .cp { color: #d29922; } /* Comment.Preproc */
-.c1 { color: #8b949e; font-style: italic; } /* Comment.Single */
-.cs { color: #8b949e; font-weight: bold; } /* Comment.Special */
+.c1 { color: #8b949e; font-style: italic; font-family: 'Monaspace Xenon', var(--font-mono); } /* Comment.Single */
+.cs { color: #8b949e; font-weight: bold; font-family: 'Monaspace Xenon', var(--font-mono); } /* Comment.Special */
 .gd { color: #f85149; } /* Generic.Deleted */
 .gi { color: #3fb950; } /* Generic.Inserted */
 .kc { color: #79c0ff; } /* Keyword.Constant */

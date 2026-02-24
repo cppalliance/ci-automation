@@ -202,6 +202,9 @@ if [ ! "$skipgcovroption" = "yes" ]; then
 
     ls -al "${outputlocation}"
 
+    # Copy font files to output directory
+    cp ci-automation/gcovr-templates/html/*.woff2 "$outputlocation/"
+
     # Generate tree.json for sidebar navigation
     python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation}"
 

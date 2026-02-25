@@ -168,8 +168,8 @@ fi
 
 if [ ! "$skipgcovroption" = "yes" ]; then
 
-    GCOVRFILTER1="*/boost/$SELF/*"
-    GCOVRFILTER2="*/$SELF/src/*"
+    GCOVRFILTER1=".*/boost/$SELF/.*"
+    GCOVRFILTER2=".*/$SELF/src/.*"
     if [ -d "gcovr" ]; then
         rm -r gcovr
     fi

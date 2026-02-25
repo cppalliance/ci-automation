@@ -168,7 +168,8 @@ fi
 
 if [ ! "$skipgcovroption" = "yes" ]; then
 
-    GCOVRFILTER=".*/$REPONAME/.*"
+    GCOVRFILTER1="*/boost/$SELF/*"
+    GCOVRFILTER2="*/$SELF/src/*"
     if [ -d "gcovr" ]; then
         rm -r gcovr
     fi
@@ -185,7 +186,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     outputlocation="$BOOST_CI_SRC_FOLDER/gcovr"
 
     # First pass, output json
-    gcovr "${GCOVR_EXTRA_OPTIONS[@]}" --merge-mode-functions separate --sort uncovered-percent --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*'  --exclude '.*/examples/.*' --filter "$GCOVRFILTER" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "${outputlocation}/summary.json" --json "${outputlocation}/coverage-raw.json"
+    gcovr "${GCOVR_EXTRA_OPTIONS[@]}" --merge-mode-functions separate --sort uncovered-percent --html-title "$REPONAME" --merge-lines --exclude-unreachable-branches --exclude-throw-branches --exclude '.*/test/.*' --exclude '.*/extra/.*' --exclude '.*/example/.*'  --exclude '.*/examples/.*' --filter "$GCOVRFILTER1" --filter "$GCOVRFILTER2" --html --output "${outputlocation}/index.html" --json-summary-pretty --json-summary "${outputlocation}/summary.json" --json "${outputlocation}/coverage-raw.json"
 
     # Fix paths
     python3 "ci-automation/scripts/fix_paths.py" \

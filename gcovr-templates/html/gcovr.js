@@ -1073,7 +1073,7 @@
       return;
     }
 
-    var originalContent = null; // stash for restoring nested view
+    var originalNodes = null; // stash for restoring nested view
 
     function collectFlatFiles(nodes, parentPath) {
       var results = [];
@@ -1205,9 +1205,12 @@
     function switchToFlat() {
       if (!window.GCOVR_TREE_DATA) return;
 
-      // Stash original content
-      if (originalContent === null) {
-        originalContent = fileList.innerHTML;
+      // Stash original DOM nodes
+      if (originalNodes === null) {
+        originalNodes = document.createDocumentFragment();
+        while (fileList.firstChild) {
+          originalNodes.appendChild(fileList.firstChild);
+        }
       }
 
       var flatFiles = collectFlatFiles(window.GCOVR_TREE_DATA, '');
@@ -1219,7 +1222,9 @@
         return aVal - bVal;
       });
 
-      fileList.innerHTML = '';
+      while (fileList.firstChild) {
+        fileList.removeChild(fileList.firstChild);
+      }
       for (var i = 0; i < flatFiles.length; i++) {
         fileList.appendChild(buildFlatRow(flatFiles[i]));
       }
@@ -1230,8 +1235,12 @@
     }
 
     function switchToNested() {
-      if (originalContent !== null) {
-        fileList.innerHTML = originalContent;
+      if (originalNodes !== null) {
+        while (fileList.firstChild) {
+          fileList.removeChild(fileList.firstChild);
+        }
+        fileList.appendChild(originalNodes);
+        originalNodes = null;
       }
       if (appContainer) appContainer.classList.remove('flat-mode');
       document.documentElement.classList.remove('early-flat-mode');

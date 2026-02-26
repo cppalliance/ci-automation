@@ -947,9 +947,7 @@ body.sidebar-resizing .main-content {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  padding-right: 12px;
-  padding-left: 0;
+  padding: 12px 12px 4px 0;
   width: 100%;
   margin-left: 0;
 }
@@ -962,11 +960,10 @@ body.sidebar-resizing .main-content {
 }
 
 .main-footer {
-  padding: 1rem;
+  padding: 4px 8px;
   text-align: center;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-  border-top: 1px solid var(--border-color);
 }
 
 .main-footer a {
@@ -978,7 +975,7 @@ body.sidebar-resizing .main-content {
    =========================================== */
 
 .summary-section {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .summary-cards {
@@ -1449,7 +1446,8 @@ body.sidebar-resizing .main-content {
 
 .source-table {
   min-width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-family: var(--font-mono);
   font-size: var(--font-size-code);
   line-height: 1.2;
@@ -1467,6 +1465,7 @@ body.sidebar-resizing .main-content {
   color: var(--text-secondary);
   font-weight: 600;
   text-align: left;
+  border-bottom: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
 }

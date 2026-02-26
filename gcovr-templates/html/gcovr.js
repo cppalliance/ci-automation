@@ -1389,17 +1389,18 @@
         var target = document.getElementById(this.getAttribute('href').substring(1));
         if (target) {
           e.preventDefault();
-          // Scroll so the target line sits just below the sticky header
-          var header = document.querySelector('.main-header');
-          var headerBottom = header ? header.getBoundingClientRect().bottom : 0;
-          var gap = 16; // breathing room below header
-          var targetTop = target.getBoundingClientRect().top + window.scrollY;
-          window.scrollTo({ top: targetTop - headerBottom - gap, behavior: 'smooth' });
+          // Scroll within the source-table-container
+          var scrollBox = document.querySelector('.source-table-container');
+          var row = target.closest('tr');
+          if (scrollBox && row) {
+            var thead = scrollBox.querySelector('thead');
+            var theadHeight = thead ? thead.offsetHeight : 0;
+            scrollBox.scrollTo({ top: row.offsetTop - theadHeight - 8, behavior: 'smooth' });
+          }
           history.replaceState(null, '', this.getAttribute('href'));
           // Highlight the target row (clear any previous highlight first)
           var prev = document.querySelector('.highlight-target');
           if (prev) prev.classList.remove('highlight-target');
-          var row = target.closest('tr');
           if (row) row.classList.add('highlight-target');
         }
       });
@@ -1422,7 +1423,16 @@
       var row = el.closest('tr');
       if (row) {
         row.classList.add('highlight-target');
-        if (scroll) row.scrollIntoView({ block: 'center' });
+        if (scroll) {
+          var scrollBox = document.querySelector('.source-table-container');
+          if (scrollBox) {
+            var thead = scrollBox.querySelector('thead');
+            var theadHeight = thead ? thead.offsetHeight : 0;
+            scrollBox.scrollTo({ top: row.offsetTop - theadHeight - 8, behavior: 'smooth' });
+          } else {
+            row.scrollIntoView({ block: 'center' });
+          }
+        }
       }
     }
 

@@ -80,7 +80,7 @@
         {% for row in source_lines %}
         <tr class="source-line{% if row.covclass %} {{row.covclass}} show_{{row.covclass}}{% endif %}">
           <td class="col-lineno">
-            <a id="{{ anchor_prefix }}l{{row.lineno}}" href="#{{ anchor_prefix }}l{{row.lineno}}">{{row.lineno}}</a>
+            <a id="{{ anchor_prefix }}l{{row.lineno}}">{{row.lineno}}</a>
           </td>
           {% if has_branches %}
           <td class="col-branch">

@@ -849,10 +849,11 @@ body.sidebar-resizing .main-content {
 
 .main-content {
   flex: 1;
+  min-width: 0;
   margin-left: calc(var(--sidebar-width) + 41px);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   transition: margin-left var(--transition-normal);
 }
 
@@ -943,6 +944,9 @@ body.sidebar-resizing .main-content {
 
 .content-wrapper {
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 24px;
   padding-right: 12px;
   padding-left: 0;
@@ -950,8 +954,15 @@ body.sidebar-resizing .main-content {
   margin-left: 0;
 }
 
+.main-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .main-footer {
-  padding: 24px;
+  padding: 1rem;
   text-align: center;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
@@ -1365,7 +1376,11 @@ body.sidebar-resizing .main-content {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .source-header {
@@ -1376,6 +1391,7 @@ body.sidebar-resizing .main-content {
   border-bottom: 1px solid var(--border-color);
   flex-wrap: wrap;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .source-title {
@@ -1425,11 +1441,14 @@ body.sidebar-resizing .main-content {
 }
 
 .source-table-container {
-  overflow-x: auto;
+  overflow: auto;
+  max-width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .source-table {
-  width: 100%;
+  min-width: 100%;
   border-collapse: collapse;
   font-family: var(--font-mono);
   font-size: var(--font-size-code);
@@ -1479,7 +1498,8 @@ body.sidebar-resizing .main-content {
   text-decoration: none;
   display: block;
   padding: 0;
-  scroll-margin-top: calc(var(--header-height) + 48px);
+  scroll-margin-top: calc(var(--header-height) + 24px);
+  cursor: pointer;
 }
 
 .source-table .col-lineno a:hover {
@@ -1490,24 +1510,81 @@ body.sidebar-resizing .main-content {
   outline: none;
 }
 
-/* Highlight the entire row when its line anchor is the URL target */
-.source-line:has(.col-lineno a:target) td {
-  background: var(--bg-hover);
+/* Persistent highlight for clicked/targeted line, colored by coverage type */
+.highlight-target td {
+  box-shadow:
+    inset 0 2px 0 0 rgba(80, 90, 105, 0.6),
+    inset 0 -2px 0 0 rgba(80, 90, 105, 0.6),
+    inset 0 0 0 100px rgba(80, 90, 105, 0.10);
+}
+.highlight-target td:first-child {
+  box-shadow:
+    inset 2px 2px 0 0 rgba(80, 90, 105, 0.6),
+    inset 0 -2px 0 0 rgba(80, 90, 105, 0.6),
+    inset 0 0 0 100px rgba(80, 90, 105, 0.10);
+}
+.highlight-target td:last-child {
+  box-shadow:
+    inset 0 2px 0 0 rgba(80, 90, 105, 0.6),
+    inset -2px -2px 0 0 rgba(80, 90, 105, 0.6),
+    inset 0 0 0 100px rgba(80, 90, 105, 0.10);
 }
 
-.source-line.coveredLine:has(.col-lineno a:target) td {
-  background: var(--coverage-high-bg);
-  box-shadow: inset 0 0 0 1px rgba(63, 185, 80, 0.25);
+.highlight-target.coveredLine td {
+  box-shadow:
+    inset 0 2px 0 0 rgba(63, 185, 80, 0.7),
+    inset 0 -2px 0 0 rgba(63, 185, 80, 0.7),
+    inset 0 0 0 100px rgba(63, 185, 80, 0.18);
+}
+.highlight-target.coveredLine td:first-child {
+  box-shadow:
+    inset 2px 2px 0 0 rgba(63, 185, 80, 0.7),
+    inset 0 -2px 0 0 rgba(63, 185, 80, 0.7),
+    inset 0 0 0 100px rgba(63, 185, 80, 0.18);
+}
+.highlight-target.coveredLine td:last-child {
+  box-shadow:
+    inset 0 2px 0 0 rgba(63, 185, 80, 0.7),
+    inset -2px -2px 0 0 rgba(63, 185, 80, 0.7),
+    inset 0 0 0 100px rgba(63, 185, 80, 0.18);
 }
 
-.source-line.uncoveredLine:has(.col-lineno a:target) td {
-  background: var(--coverage-low-bg);
-  box-shadow: inset 0 0 0 1px rgba(248, 81, 73, 0.25);
+.highlight-target.uncoveredLine td {
+  box-shadow:
+    inset 0 2px 0 0 rgba(248, 81, 73, 0.7),
+    inset 0 -2px 0 0 rgba(248, 81, 73, 0.7),
+    inset 0 0 0 100px rgba(248, 81, 73, 0.18);
+}
+.highlight-target.uncoveredLine td:first-child {
+  box-shadow:
+    inset 2px 2px 0 0 rgba(248, 81, 73, 0.7),
+    inset 0 -2px 0 0 rgba(248, 81, 73, 0.7),
+    inset 0 0 0 100px rgba(248, 81, 73, 0.18);
+}
+.highlight-target.uncoveredLine td:last-child {
+  box-shadow:
+    inset 0 2px 0 0 rgba(248, 81, 73, 0.7),
+    inset -2px -2px 0 0 rgba(248, 81, 73, 0.7),
+    inset 0 0 0 100px rgba(248, 81, 73, 0.18);
 }
 
-.source-line.partialCoveredLine:has(.col-lineno a:target) td {
-  background: var(--coverage-medium-bg);
-  box-shadow: inset 0 0 0 1px rgba(210, 153, 34, 0.25);
+.highlight-target.partialCoveredLine td {
+  box-shadow:
+    inset 0 2px 0 0 rgba(210, 153, 34, 0.7),
+    inset 0 -2px 0 0 rgba(210, 153, 34, 0.7),
+    inset 0 0 0 100px rgba(210, 153, 34, 0.18);
+}
+.highlight-target.partialCoveredLine td:first-child {
+  box-shadow:
+    inset 2px 2px 0 0 rgba(210, 153, 34, 0.7),
+    inset 0 -2px 0 0 rgba(210, 153, 34, 0.7),
+    inset 0 0 0 100px rgba(210, 153, 34, 0.18);
+}
+.highlight-target.partialCoveredLine td:last-child {
+  box-shadow:
+    inset 0 2px 0 0 rgba(210, 153, 34, 0.7),
+    inset -2px -2px 0 0 rgba(210, 153, 34, 0.7),
+    inset 0 0 0 100px rgba(210, 153, 34, 0.18);
 }
 
 .source-table .col-branch,
@@ -1965,7 +2042,6 @@ body.sidebar-resizing .main-content {
   }
 
   .source-header {
-    flex-direction: column;
     align-items: flex-start;
   }
 }

@@ -17,6 +17,7 @@
     initTreeControls();
     initViewToggle();
     initTlaNavigation();
+    initLineHighlight();
     initColumnToggles();
     initPopupResize();
 
@@ -1388,13 +1389,58 @@
         var target = document.getElementById(this.getAttribute('href').substring(1));
         if (target) {
           e.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Update URL hash without triggering a jump
+          // Scroll so the target line sits just below the sticky header
+          var header = document.querySelector('.main-header');
+          var headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+          var gap = 16; // breathing room below header
+          var targetTop = target.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top: targetTop - headerBottom - gap, behavior: 'smooth' });
           history.replaceState(null, '', this.getAttribute('href'));
+          // Highlight the target row (clear any previous highlight first)
+          var prev = document.querySelector('.highlight-target');
+          if (prev) prev.classList.remove('highlight-target');
+          var row = target.closest('tr');
+          if (row) row.classList.add('highlight-target');
         }
       });
       cell.appendChild(a);
     }
+  }
+
+  // ===========================================
+  // Line number click highlight
+  // ===========================================
+
+  function initLineHighlight() {
+    function highlightFromHash(scroll) {
+      var prev = document.querySelector('.highlight-target');
+      if (prev) prev.classList.remove('highlight-target');
+      var id = window.location.hash.slice(1);
+      if (!id) return;
+      var el = document.getElementById(id);
+      if (!el) return;
+      var row = el.closest('tr');
+      if (row) {
+        row.classList.add('highlight-target');
+        if (scroll) row.scrollIntoView({ block: 'center' });
+      }
+    }
+
+    // Event delegation: single listener on the table container
+    var container = document.querySelector('.source-table-container');
+    if (container) {
+      container.addEventListener('click', function(e) {
+        var anchor = e.target.closest('.col-lineno a');
+        if (!anchor) return;
+        e.preventDefault();
+        if (anchor.id) history.replaceState(null, '', '#' + anchor.id);
+        highlightFromHash(false);
+      });
+    }
+
+    // Highlight + scroll on initial load and back/forward navigation
+    highlightFromHash(true);
+    window.addEventListener('hashchange', function() { highlightFromHash(true); });
   }
 
   // ===========================================

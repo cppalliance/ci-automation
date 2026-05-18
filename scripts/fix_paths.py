@@ -5,6 +5,32 @@ Fix file paths in gcovr JSON output.
 Transforms boost-root-relative paths to repo-relative paths so that
 gcovr's second pass (HTML generation) produces clean navigation.
 
+boost-root-relative paths are in the form:
+"file": "boost/capy/timeout.hpp",
+"file": "boost/capy/when_all.hpp",
+"file": "boost/capy/when_any.hpp",
+"file": "boost/capy/write.hpp",
+"file": "libs/capy/src/buffers/circular_dynamic_buffer.cpp",
+"file": "libs/capy/src/cond.cpp",
+"file": "libs/capy/src/detail/except.cpp",
+"file": "libs/capy/src/error.cpp",
+
+The files are either in the libs/ directory, with is expected in boost-root
+or they have been copied into a global, top-level boost/ directory.
+
+After running fix_paths.py the same file appear as:
+
+"file": "include/boost/capy/timeout.hpp",
+"file": "include/boost/capy/when_all.hpp",
+"file": "include/boost/capy/when_any.hpp",
+"file": "include/boost/capy/write.hpp",
+"file": "src/buffers/circular_dynamic_buffer.cpp",
+"file": "src/cond.cpp",
+"file": "src/detail/except.cpp",
+"file": "src/error.cpp",
+
+Which is their regular location within a lib folder.
+
 Usage: python3 fix_paths.py <input.json> <output.json> --repo <REPONAME>
 """
 

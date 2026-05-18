@@ -107,15 +107,106 @@ def get_coverage_class(coverage):
 
 
 def clean_name(raw_name):
-    """Extract the leaf name from a possibly relative path."""
+    """Strip leading relative-path prefixes (./ and ../) but preserve the rest of the path.
+
+    Multi-segment names like 'boost/url/url_view.hpp' are kept intact here
+    so that normalize_tree() can later split them into a proper nested
+    directory structure.
+    """
     if not raw_name:
         return raw_name
     cleaned = raw_name
     while cleaned.startswith('../') or cleaned.startswith('./'):
         cleaned = cleaned[3:] if cleaned.startswith('../') else cleaned[2:]
-    if '/' in cleaned:
-        cleaned = cleaned.rsplit('/', 1)[-1]
     return cleaned or raw_name
+
+
+def normalize_tree(nodes):
+    """Expand multi-segment node names into a proper nested directory structure.
+
+    A node whose name is e.g. 'boost/url/url_view.hpp' becomes a synthetic
+    'boost' directory containing a 'url' directory containing 'url_view.hpp'.
+    Multiple entries sharing a prefix get merged under one parent directory.
+
+    This is required because gcovr collapses single-child intermediate
+    directories in its HTML, so what reaches us as a single 'file' entry
+    can really represent multiple levels of nesting.
+
+    Doing this here (Python) rather than in the browser keeps the JSON
+    contract simple: every node has a single-segment name.
+    """
+    if not nodes:
+        return nodes
+
+    groups = {}
+    order = []
+
+    for node in nodes:
+        name = node.get('name', '')
+        slash_idx = name.find('/')
+
+        if slash_idx == -1:
+            if name in groups:
+                # Merge with existing entry of the same name
+                existing = groups[name]
+                if node.get('link'):
+                    existing['link'] = node['link']
+                if node.get('coverage'):
+                    existing['coverage'] = node['coverage']
+                if node.get('coverageClass'):
+                    existing['coverageClass'] = node['coverageClass']
+                if node.get('children'):
+                    existing['children'] = (existing.get('children') or []) + node['children']
+            else:
+                groups[name] = dict(node)
+                order.append(name)
+        else:
+            prefix = name[:slash_idx]
+            rest = name[slash_idx + 1:]
+
+            if prefix not in groups:
+                groups[prefix] = {
+                    'name': prefix,
+                    'coverage': '',
+                    'coverageClass': 'coverage-unknown',
+                    'linesTotal': '',
+                    'linesExec': '',
+                    'linesCoverage': '',
+                    'linesClass': '',
+                    'functionsCoverage': '',
+                    'functionsClass': '',
+                    'branchesCoverage': '',
+                    'branchesClass': '',
+                    'isDirectory': True,
+                    'link': None,
+                    'children': [],
+                }
+                order.append(prefix)
+            if not groups[prefix].get('children'):
+                groups[prefix]['children'] = []
+
+            child_node = dict(node)
+            child_node['name'] = rest
+            groups[prefix]['children'].append(child_node)
+
+    result = []
+    for name in order:
+        node = groups[name]
+        if node.get('children'):
+            node['children'] = normalize_tree(node['children'])
+        result.append(node)
+
+    return result
+
+
+def sort_tree(nodes):
+    """Recursively sort each level: directories first, then files, alphabetical within."""
+    if not nodes:
+        return
+    nodes.sort(key=lambda x: (not x.get('isDirectory', False), x.get('name', '').lower()))
+    for node in nodes:
+        if node.get('children'):
+            sort_tree(node['children'])
 
 
 def build_tree(output_dir):
@@ -171,8 +262,10 @@ def build_tree(output_dir):
 
             nodes.append(node)
 
-        # Sort: directories first, then files, alphabetically
-        nodes.sort(key=lambda x: (not x['isDirectory'], x['name'].lower()))
+        # Expand any multi-segment names into nested directories, then
+        # sort every level (directories first, then files, alphabetically).
+        nodes = normalize_tree(nodes)
+        sort_tree(nodes)
         return nodes
 
     # Start from index.html
@@ -181,35 +274,54 @@ def build_tree(output_dir):
 
 
 def inject_tree_data(output_dir, tree):
-    """Inject tree data as JavaScript variable into all HTML files."""
+    """Inject tree data into the generated JS file's placeholder line.
+
+    The JS file contains a final line of the form
+        window.GCOVR_TREE_DATA = ...;
+    (either an empty default from the Jinja template, or a previously
+    injected value). We replace that single assignment with the real tree.
+    Doing this in one shared .js file rather than inline in every .html
+    page avoids duplicating the tree JSON across hundreds of HTML files.
+
+    Note: gcovr renames the template file `gcovr.js` to `index.js` in the
+    output directory, so that's what we target here.
+    """
     output_path = Path(output_dir)
-    tree_script = f'<script>window.GCOVR_TREE_DATA={json.dumps(tree)};</script>'
+    js_file = output_path / 'index.js'
+    if not js_file.exists():
+        print(f"Warning: index.js not found at {js_file}", file=sys.stderr)
+        return 0
 
-    count = 0
-    for html_file in output_path.glob('*.html'):
-        try:
-            with open(html_file, 'r', encoding='utf-8') as f:
-                content = f.read()
+    new_assignment = f'window.GCOVR_TREE_DATA = {json.dumps(tree)};'
 
-            original = content
+    try:
+        with open(js_file, 'r', encoding='utf-8') as f:
+            content = f.read()
 
-            if 'window.GCOVR_TREE_DATA' in content:
-                # Replace existing tree data if present
-                content = re.sub(
-                    r'<script>\s*window\.GCOVR_TREE_DATA\s*=\s*.*?;\s*</script>',
-                    tree_script, content, flags=re.DOTALL)
-            elif '</body>' in content:
-                # First-time injection
-                content = content.replace('</body>', f'{tree_script}\n</body>')
+        # Non-greedy match up to the first `;` — safe because file paths
+        # never contain a literal `;`. DOTALL handles pretty-printed JSON
+        # spanning multiple lines from `tojson(2)` in the template.
+        # Pass a lambda for the replacement so that any backslashes in the
+        # JSON aren't interpreted as regex backreferences.
+        new_content, count = re.subn(
+            r'window\.GCOVR_TREE_DATA\s*=\s*.*?;',
+            lambda _m: new_assignment,
+            content,
+            count=1,
+            flags=re.DOTALL,
+        )
 
-            if content != original:
-                with open(html_file, 'w', encoding='utf-8') as f:
-                    f.write(content)
-                count += 1
-        except Exception as e:
-            print(f"Warning: Could not inject into {html_file}: {e}", file=sys.stderr)
+        if count == 0:
+            # No placeholder found — append the assignment so the data is
+            # still defined globally.
+            new_content = content.rstrip() + '\n' + new_assignment + '\n'
 
-    return count
+        with open(js_file, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+        return 1
+    except Exception as e:
+        print(f"Warning: Could not inject into {js_file}: {e}", file=sys.stderr)
+        return 0
 
 
 def main():
@@ -232,9 +344,12 @@ def main():
 
     print(f"Generated {tree_file} with {len(tree)} root entries")
 
-    # Inject tree data into HTML files for local file:// access
+    # Inject tree data into the generated index.js placeholder
     injected = inject_tree_data(output_dir, tree)
-    print(f"Injected tree data into {injected} HTML files")
+    if injected:
+        print(f"Injected tree data into {output_dir}/index.js")
+    else:
+        print("Warning: tree data was not injected into index.js", file=sys.stderr)
 
 
 if __name__ == '__main__':

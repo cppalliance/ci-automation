@@ -78,6 +78,22 @@
     var fragment = document.createDocumentFragment();
     var matchedSegments = [];
 
+    // Fill an element with the segments of a (possibly joined) name like
+    // "boost/url", rendering "boost", a separator, "url". Used so a joined
+    // directory shows its segments inline yet remains one hyperlink target.
+    function appendSegments(parentEl, name) {
+      var segments = name.split('/');
+      for (var k = 0; k < segments.length; k++) {
+        if (k > 0) {
+          var inner = document.createElement('span');
+          inner.className = 'separator';
+          inner.textContent = '/';
+          parentEl.appendChild(inner);
+        }
+        parentEl.appendChild(document.createTextNode(segments[k]));
+      }
+    }
+
     for (var i = 0; i < treePath.length; i++) {
       var node = treePath[i];
       var isLast = (i === treePath.length - 1);
@@ -94,12 +110,12 @@
       if (node.link && !isLast) {
         var a = document.createElement('a');
         a.href = node.link;
-        a.textContent = node.name;
+        appendSegments(a, node.name);
         fragment.appendChild(a);
       } else {
         var span = document.createElement('span');
         span.className = 'current-file';
-        span.textContent = node.name;
+        appendSegments(span, node.name);
         fragment.appendChild(span);
       }
     }
@@ -398,55 +414,13 @@
     var treeContainer = document.getElementById('file-tree');
     if (!treeContainer) return;
 
-    // Check for embedded tree data first (works for local file:// access)
-    if (window.GCOVR_TREE_DATA) {
-      window.GCOVR_TREE_DATA = normalizeTree(window.GCOVR_TREE_DATA);
+    // Tree data is produced already-normalized and already-sorted by the
+    // upstream tooling (Python's gcovr_build_tree.py or gcovr itself), so
+    // no normalize/sort pass is needed here. We still dedupe + join chains.
       deduplicateTree(window.GCOVR_TREE_DATA);
-      collapseSingleChildDirs(window.GCOVR_TREE_DATA);
-      deduplicateTree(window.GCOVR_TREE_DATA);
+      joinSingleChildDirs(window.GCOVR_TREE_DATA);
+      sortTree(window.GCOVR_TREE_DATA);
       renderTree(treeContainer, window.GCOVR_TREE_DATA);
-      return;
-    }
-
-    // Fallback: try to load tree.json for full hierarchy
-    fetch('tree.json')
-      .then(function(response) {
-        if (!response.ok) throw new Error('No tree.json');
-        return response.json();
-      })
-      .then(function(tree) {
-        window.GCOVR_TREE_DATA = normalizeTree(tree);
-        deduplicateTree(window.GCOVR_TREE_DATA);
-        collapseSingleChildDirs(window.GCOVR_TREE_DATA);
-        deduplicateTree(window.GCOVR_TREE_DATA);
-        renderTree(treeContainer, window.GCOVR_TREE_DATA);
-        // Re-run dependent init now that the tree exists
-        initNavOverride();
-        initBreadcrumbs();
-        initSearch();
-      })
-      .catch(function(err) {
-        console.log('tree.json not found, using static sidebar');
-        // Keep existing static content from Jinja template
-      });
-  }
-
-  // cspell:ignore capy
-  // Collapse single-child directory chains: if a directory has exactly
-  // one child and that child is also a directory, absorb the grandchildren.
-  // e.g. include > boost > capy > [items] becomes include > [items]
-  function collapseSingleChildDirs(nodes) {
-    for (var i = 0; i < nodes.length; i++) {
-      var node = nodes[i];
-      if (!node.isDirectory || !node.children) continue;
-      while (node.children.length === 1 && node.children[0].isDirectory &&
-             node.children[0].children && node.children[0].children.length > 0) {
-        var child = node.children[0];
-        if (!node.link && child.link) node.link = child.link;
-        node.children = child.children;
-      }
-      collapseSingleChildDirs(node.children);
-    }
   }
 
   // Deduplicate tree: when a node has a child with the same name
@@ -475,72 +449,62 @@
     }
   }
 
-  // Normalize tree: expand multi-segment node names (e.g. "capy/buffers")
-  // into proper nested directory structures so the tree and breadcrumbs
-  // display correctly.
-  function normalizeTree(nodes) {
-    if (!nodes || nodes.length === 0) return nodes;
+  // Re-sort the tree: directories first, then files, alphabetically within
+  // each group. Python already sorts each level, but normalizeTree creates
+  // synthetic directory nodes from multi-segment FILE entries (e.g. a deep
+  // chain like subdir1/subdir2/subdir3/file.hpp that gcovr itself collapsed).
+  // Those synthetic dirs end up wherever the originating file landed in the
+  // Python sort — i.e. in the file bucket — so without this pass they appear
+  // mixed in with the files instead of at the top with the other directories.
+  function sortTree(nodes) {
+    if (!nodes || nodes.length === 0) return;
+    nodes.sort(function(a, b) {
+      var aIsDir = a.isDirectory || (a.children && a.children.length > 0);
+      var bIsDir = b.isDirectory || (b.children && b.children.length > 0);
+      if (aIsDir && !bIsDir) return -1;
+      if (!aIsDir && bIsDir) return 1;
+      var aName = (a.name || '').toLowerCase();
+      var bName = (b.name || '').toLowerCase();
+      return aName.localeCompare(bName);
+    });
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].children) sortTree(nodes[i].children);
+    }
+  }
 
-    var groups = {};
-    var order = [];
-
+  // Join chains of single-child directories into one sidebar entry.
+  // If a directory contains nothing but one child directory, the two are
+  // merged: the name becomes "parent/child", and the link + stats are taken
+  // from the (deepest) child. The grandchildren become the new children.
+  // Repeats until the chain ends (multiple children, or a file appears).
+  // Result: e.g. include > boost > url > [files] becomes include/boost/url
+  // as a single entry whose click navigates straight to the url directory.
+  function joinSingleChildDirs(nodes) {
+    if (!nodes) return;
+    var statKeys = ['linesTotal', 'linesExec', 'linesCoverage', 'linesClass',
+                    'functionsCoverage', 'functionsClass',
+                    'branchesCoverage', 'branchesClass'];
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
-      var slashIdx = node.name.indexOf('/');
-
-      if (slashIdx === -1) {
-        // Simple name — add directly or merge with existing group
-        if (groups[node.name]) {
-          var existing = groups[node.name];
-          if (node.link) existing.link = node.link;
-          if (node.coverage) existing.coverage = node.coverage;
-          if (node.coverageClass) existing.coverageClass = node.coverageClass;
-          if (node.children && node.children.length > 0) {
-            existing.children = (existing.children || []).concat(node.children);
+      if (!node.isDirectory || !node.children) continue;
+      while (node.children.length === 1 && node.children[0].isDirectory) {
+        var child = node.children[0];
+        node.name = node.name + '/' + child.name;
+        // The joined entry represents the deepest directory for clicks
+        // and for the coverage stats shown next to it.
+        if (child.link) node.link = child.link;
+        if (child.coverage) node.coverage = child.coverage;
+        if (child.coverageClass) node.coverageClass = child.coverageClass;
+        for (var k = 0; k < statKeys.length; k++) {
+          var key = statKeys[k];
+          if (child[key] !== undefined && child[key] !== '') {
+            node[key] = child[key];
           }
-        } else {
-          var copy = {};
-          for (var key in node) {
-            if (node.hasOwnProperty(key)) copy[key] = node[key];
-          }
-          groups[node.name] = copy;
-          order.push(node.name);
         }
-      } else {
-        // Multi-segment name — split on first '/' and group
-        var prefix = node.name.substring(0, slashIdx);
-        var rest = node.name.substring(slashIdx + 1);
-
-        if (!groups[prefix]) {
-          groups[prefix] = {
-            name: prefix,
-            isDirectory: true,
-            children: []
-          };
-          order.push(prefix);
-        }
-        if (!groups[prefix].children) groups[prefix].children = [];
-
-        // Create child node with remaining path as name
-        var childNode = {};
-        for (var key in node) {
-          if (node.hasOwnProperty(key)) childNode[key] = node[key];
-        }
-        childNode.name = rest;
-        groups[prefix].children.push(childNode);
+        node.children = child.children || [];
       }
+      joinSingleChildDirs(node.children);
     }
-
-    // Build result with recursive normalization
-    var result = [];
-    for (var i = 0; i < order.length; i++) {
-      var node = groups[order[i]];
-      if (node.children && node.children.length > 0) {
-        node.children = normalizeTree(node.children);
-      }
-      result.push(node);
-    }
-    return result;
   }
 
   // Save expanded folder paths to localStorage
@@ -697,8 +661,9 @@
     header.appendChild(icon);
 
     // Label (with link if available)
-    // Clean the display name to remove relative path prefixes like '../../../'
-    var displayName = getDisplayName(item.name);
+    // Use the full cleaned name so joined-dir entries like "boost/url"
+    // display as a single multi-segment label in the sidebar.
+    var displayName = cleanPathName(item.name);
     var tooltipText = cleanPathName(item.fullPath || item.name);
     var label = document.createElement('span');
     label.className = 'tree-label';
@@ -2191,3 +2156,5 @@
   }
 
 })();
+
+window.GCOVR_TREE_DATA = {{ GCOVR_TREE_DATA | default([]) | tojson(2) | safe }};

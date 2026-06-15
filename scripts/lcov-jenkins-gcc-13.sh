@@ -227,8 +227,14 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     # Copy font files to output directory
     cp ci-automation/gcovr-templates/html/*.woff2 "$outputlocation/"
 
-    # Generate tree.json for sidebar navigation
-    python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation}"
+    # Generate tree.json for sidebar navigation.
+    # As of gcovr commit 2c6adcb52, gcovr natively builds the directory tree
+    # (data_model/container.py:collapse_directories_with_single_child) and
+    # injects it into the generated index.js as `window.GCOVR_TREE_DATA = ...`.
+    # That obsoletes our custom builder, so we leave it commented out here
+    # rather than deleting it, in case we need to fall back to the old
+    # HTML-scraping path.
+    # python3 "ci-automation/scripts/gcovr_build_tree.py" "${outputlocation}"
 
     # Generate coverage badges
     python3 "ci-automation/scripts/generate_badges.py" "$outputlocation" --json "$outputlocation/summary.json"

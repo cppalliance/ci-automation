@@ -212,7 +212,6 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     --merge-lines \
     --html-nested \
     --no-html-self-contained \
-    --html-theme=boost.green \
     --html-title "$REPONAME" \
     --html \
     --output "$outputlocation/index.html" \
@@ -220,6 +219,7 @@ if [ ! "$skipgcovroption" = "yes" ]; then
     --json-summary "$outputlocation/summary.json"
 
     # --html-template-dir=ci-automation/gcovr-templates/html \
+    # --html-theme=boost.green \
 
     # Second pass, generate html
     # Let's remove many options/flags from the second pass. See above.

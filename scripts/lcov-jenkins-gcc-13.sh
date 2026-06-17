@@ -102,8 +102,9 @@ fi
 # pip install --upgrade gcovr==8.6 || true
 # pip install --upgrade git+https://github.com/Spacetown/gcovr.git@05cbbc6f769da3671a3f659ad99198bac4d62dee || true
 # pip install --upgrade git+https://github.com/gcovr/gcovr.git@8dc1762283bbc30044f12e998b78e7f762e0f849 || true # multiple months. working fine.
-pip install --upgrade git+https://github.com/gcovr/gcovr.git@2c6adcb521e88149c9256002ff95de8853bd6573 || true # right after new templates merge. problem.
+# pip install --upgrade git+https://github.com/gcovr/gcovr.git@2c6adcb521e88149c9256002ff95de8853bd6573 || true # right after new templates merge. problem.
 # pip install --upgrade git+https://github.com/gcovr/gcovr.git@30a3fa2f36de12dd3694f26adce14c168563693e || true # new template bug fixes. Testing.
+pip install --upgrade git+https://github.com/sdarwin/gcovr.git@c9c6f97d9718dedd115f629e2a3a9449b1b606de || true # Adjust tree data root.
 
 gcovr --version
 

@@ -106,7 +106,8 @@ fi
 # pip install --upgrade git+https://github.com/gcovr/gcovr.git@30a3fa2f36de12dd3694f26adce14c168563693e || true # new template bug fixes. Testing.
 # pip install --upgrade git+https://github.com/sdarwin/gcovr.git@c9c6f97d9718dedd115f629e2a3a9449b1b606de || true # Adjust tree data root.
 # pip install --upgrade git+https://github.com/gcovr/gcovr.git@4e5cbc28adcfcfd9eb60f5af4ef8730869cf5945 || true # Adjust tree data root.
-pip install --upgrade git+https://github.com/gcovr/gcovr.git@main || true # After merge of all fixes. In 'main'.
+# pip install --upgrade git+https://github.com/gcovr/gcovr.git@main || true # After merge of all fixes. In 'main'.
+pip install --upgrade git+https://github.com/gcovr/gcovr.git@40f128c6e113c4c49b0212bbb099930a49f66fac || true # Test PR excluded metrics
 
 gcovr --version
 

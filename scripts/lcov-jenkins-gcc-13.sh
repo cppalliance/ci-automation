@@ -76,9 +76,9 @@ fi
 # That may be overwritten by BOOST_BRANCH_COVERAGE, above.
 : "${GCOVR_BRANCH_COVERAGE:=0}"
 
-GCOVR_EXTRA_OPTIONS=()
+GCOVR_EXTRA_OPTIONS=(--gcov-ignore-parse-errors=suspicious_hits.warn_once_per_file)
 if [ "${GCOVR_BRANCH_COVERAGE}" = "0" ]; then
-    GCOVR_EXTRA_OPTIONS=(--exclude-branches-by-pattern='.*')
+    GCOVR_EXTRA_OPTIONS+=(--exclude-branches-by-pattern='.*')
 fi
 
 # export USER=$(whoami)
